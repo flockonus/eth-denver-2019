@@ -23,7 +23,7 @@ contract City {
     // all plots start owned by 0x0, and they are Residence, of value 1
     struct Plot {
         address owner;
-        // 0: residential, 1: commercial, 2: industrial
+        // 0: undeveloped, 1: residential, 2: commercial, 3: industrial
         uint8 zone;
         // value declared by the player. Special case is val 0, which becomes 1.
         uint32 value;
@@ -40,11 +40,12 @@ contract City {
     uint public gameCount;
 
     int constant INIT_POINTS = 1000;
-    uint8 constant RESIDENTIAL = 0;
-    uint8 constant COMMERCIAL = 1;
-    uint8 constant INDUSTRIAL = 2;
+    uint8 constant UNDEVELOPED = 0;
+    uint8 constant RESIDENTIAL = 1;
+    uint8 constant COMMERCIAL = 2;
+    uint8 constant INDUSTRIAL = 3;
     uint8[5] INCOME = [0, 1, 3, 6, 12];
-    int8[4][2] NEIGHBORDELTAS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    int8[2][4] NEIGHBORDELTAS = [[int8(-1), int8(0)], [int8(1), int8(0)], [int8(0), int8(-1)], [int8(0), int8(1)]];
 
     constructor() public {
         // what?
@@ -122,7 +123,7 @@ contract City {
         return (plot.owner, plot.zone, plot.value);
     }
 
-    function calculateIncome(uint gameId) public view {
+    function calculateIncome(uint gameId) public {
         Game storage game = games[gameId];
         for (uint8 col = 0; col < game.boardSize; ++col) {
             for (uint8 row = 0; row < game.boardSize; ++row) {
@@ -132,15 +133,15 @@ contract City {
                 (player, zone, value) = getPlot(gameId, row, col);
                 uint score = 0;
                 for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
-                    uint8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
-                    uint8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
+                    int8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
+                    int8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
                     if ((deltaX >= 0 || row > 0) && (deltaX <= 0 || row < game.boardSize) &&
                        (deltaY >= 0 || col > 0) && (deltaY <= 0 || col < game.boardSize)) {
                         // This is a valid neighbor so get it...
                         address neighborPlayer;
                         uint8 neighborZone;
                         uint32 neighborValue;
-                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, row + deltaX, row + deltaY);
+                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(row) + deltaX), uint8(int8(col) + deltaY));
 
                         // ... and apply neighborhood counting rules
                         if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
@@ -158,12 +159,13 @@ contract City {
         }
     }
 
-    function getPlayers(uint gameId) external view returns (address[], uint32[]) {
+    function getPlayers(uint gameId) external view returns (address[] memory, int[] memory) {
         Game storage game = games[gameId];
-        address[] memory players = new address[](game.players.length);
-        players.push(game.players);
-        uint32[] memory balances = new uint32[](game.balances.length);
-        balances.push(game.balances);
+        address[] memory players = game.players;
+        int[] memory balances = new int[](players.length);
+        for (uint8 i = 0; i < players.length; ++i) {
+            balances[i] = game.balances[players[i]];
+        }
         return (players, balances);
     }
 
