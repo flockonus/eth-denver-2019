@@ -7,7 +7,13 @@ contract('City', (accounts) => {
     city = await City.new();
   });
 
-  it('aaa', async function() {
-    console.log((await city.aaa()).toString());
+  it('createGame', async function() {
+    // create a game and stake
+    await city.createGame(1, { value: 1 });
+  });
+
+  it('join game & start it', async function() {
+    // create a game and stake
+    await city.createGame(1, { value: 1 });
   });
 });
