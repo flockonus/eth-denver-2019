@@ -6,6 +6,8 @@ contract City {
         uint8 boardSize;
         // up to how many players the game MUST have
         uint8 partySize;
+        // keep track of rounds, starting from 0
+        uint8 round;
         // limit of time for all players to join a session
         uint64 joinLimitAt;
         // exact time the session stated, 0 means it didn't
@@ -18,6 +20,8 @@ contract City {
         mapping(uint => Plot) plots;
         // once players join they get a balance initialized to their wallet
         mapping(address => int) balances;
+        // collect bids plotId -> top bid
+        mapping(uint => Plot) bids;
     }
 
     // all plots start owned by 0x0, and they are Residence, of value 1
@@ -53,6 +57,7 @@ contract City {
             // TODO fix those arbitrary values
             boardSize: _boardSize,
             partySize: 2,
+            round: 0,
             // arbitrary limit
             joinLimitAt: uint64(now + 1 hours),
             startedAt: 0,
@@ -115,6 +120,48 @@ contract City {
         require (game.boardSize > 0, "game doesnt exist");
         Plot storage plot = game.plots[(y * game.boardSize) + x];
         return (plot.owner, plot.zone, plot.value);
+    }
+
+    /// @notice any player can put a bid for that round, only the top one per square will stay
+    function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) public {
+        Game storage game = games[gameId];
+        require(game.boardSize > 1, "game doesnt exist");
+        require(game.startedAt > 0, "game didnt start");
+        require(price < INIT_POINTS * 10, "price over limit");
+        require(game.balances[msg.sender] > price, "balance cant go negative");
+
+        uint plotId = (y * game.boardSize) + x;
+
+        Plot storage currentBid = game.bids[plotId];
+
+        // incoming bid is higher than an existing bid (if any)
+        if (price > currentBid.value) {
+            // silently discard possible existing bid
+            game.bids[plotId] = Plot({
+                owner: msg.sender,
+                zone: zone,
+                value: price
+            });
+        } else {
+            // TODO maybe revert the loser bid?
+        }
+
+        // maybe we should check user balance here BUT that would require a full round simulation, so nevermind.
+    }
+
+    /// @dev run through all the bids for current round, and update the grid
+    function _resolveBids(uint gameId) public {
+        Game storage game = games[gameId];
+        require(game.boardSize > 1, "game doesnt exist");
+        require(game.startedAt > 0, "game didnt start");
+
+        for (uint x = 0; x < game.boardSize; x++) {
+            for (uint y = 0; y < game.boardSize; y++) {
+                uint plotId = (y * game.boardSize) + x;
+                // just debug for now
+                ...TODO. .... game.bids[plotId]
+            }
+        }
     }
 
     // function _calcRules()
