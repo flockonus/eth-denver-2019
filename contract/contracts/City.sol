@@ -40,6 +40,11 @@ contract City {
     uint public gameCount;
 
     int constant INIT_POINTS = 1000;
+    uint8 constant RESIDENTIAL = 0;
+    uint8 constant COMMERCIAL = 1;
+    uint8 constant INDUSTRIAL = 2;
+    uint8[5] INCOME = [0, 1, 3, 6, 12];
+    int8[4][2] NEIGHBORDELTAS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
     constructor() public {
         // what?
@@ -115,6 +120,51 @@ contract City {
         require (game.boardSize > 0, "game doesnt exist");
         Plot storage plot = game.plots[(y * game.boardSize) + x];
         return (plot.owner, plot.zone, plot.value);
+    }
+
+    function calculateIncome(uint gameId) public view {
+        Game storage game = games[gameId];
+        for (uint8 col = 0; col < game.boardSize; ++col) {
+            for (uint8 row = 0; row < game.boardSize; ++row) {
+                address player;
+                uint8 zone;
+                uint32 value;
+                (player, zone, value) = getPlot(gameId, row, col);
+                uint score = 0;
+                for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
+                    uint8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
+                    uint8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
+                    if ((deltaX >= 0 || row > 0) && (deltaX <= 0 || row < game.boardSize) &&
+                       (deltaY >= 0 || col > 0) && (deltaY <= 0 || col < game.boardSize)) {
+                        // This is a valid neighbor so get it...
+                        address neighborPlayer;
+                        uint8 neighborZone;
+                        uint32 neighborValue;
+                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, row + deltaX, row + deltaY);
+
+                        // ... and apply neighborhood counting rules
+                        if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
+                            score++;
+                        } else if (zone == COMMERCIAL && neighborZone == INDUSTRIAL) {
+                            score++;
+                        } else if (zone == INDUSTRIAL && neighborZone == RESIDENTIAL) {
+                            score++;
+                        }
+                    }
+                }
+                uint32 income = INCOME[score];
+                game.balances[player] += income;
+            }
+        }
+    }
+
+    function getPlayers(uint gameId) external view returns (address[], uint32[]) {
+        Game storage game = games[gameId];
+        address[] memory players = new address[](game.players.length);
+        players.push(game.players);
+        uint32[] memory balances = new uint32[](game.balances.length);
+        balances.push(game.balances);
+        return (players, balances);
     }
 
     // function _calcRules()

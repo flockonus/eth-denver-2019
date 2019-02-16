@@ -33,6 +33,18 @@ async function debugBoard(gameId, city) {
   }
 }
 
+async function debugPlayers(gameId, city) {
+    let players = [];
+    let balances = [];
+    console.log(`Players and balances:`);
+    for (let i = 0; i < players.length; ++i) {
+      (players, balances) = await city.getPlayers(gameId);
+      let player = players[i];
+      console.log(`player ${player}; balance ${balances[player]}`);
+    }
+
+}
+
 contract('City', (accounts) => {
   let city;
   const p1 = accounts[0];
@@ -62,5 +74,11 @@ contract('City', (accounts) => {
     ppLogs(tx);
 
     await debugBoard(1, city);
+  });
+
+  it('calculate income', async function() {
+    let tx;
+    tx = await city.calculateIncome(1);
+    await debugPlayers(1, city);
   });
 });
