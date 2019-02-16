@@ -1,5 +1,5 @@
 pragma solidity >=0.4.25 <0.6.0;
 
 contract City {
-    uint public aaa = 1;
+    uint public aaa = 9999999999999999999999999999999;
 }
