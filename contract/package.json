@@ -30,7 +30,7 @@
     "solium": "^1.1.8"
   },
   "dependencies": {
-    "truffle": "5.0.4",
+    "truffle": "^5.0.4",
     "truffle-hdwallet-provider": "dapperlabs/truffle-hdwallet-provider#v1.0.1"
   }
 }
