@@ -1,0 +1,36 @@
+{
+  "name": "cryptokitties-items-sc",
+  "version": "0.0.0",
+  "description": "Kitty Items smart contract repo",
+  "main": "index.js",
+  "repository": "git@github.com:dapperlabs/cryptokitties-items-sc.git",
+  "author": "DapperLabs",
+  "license": "private",
+  "private": true,
+  "scripts": {
+    "test": "truffle test",
+    "truffle": "truffle",
+    "lint": "yarn lint:js && yarn lint:sol",
+    "lint:fix": "yarn lint:js:fix && yarn lint:sol:fix",
+    "lint:js": "eslint test/",
+    "lint:js:fix": "eslint test/ --fix",
+    "lint:sol": "solium -d contracts/",
+    "lint:sol:fix": "solium -d contracts/ --fix",
+    "solium": "solium"
+  },
+  "devDependencies": {
+    "babel-eslint": "^8.0.1",
+    "chai": "^4.1.2",
+    "chai-bignumber": "3.0.0",
+    "eslint": "^4.8.0",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.6.0",
+    "ethlint": "1.2.3",
+    "prettier": "1.14.0",
+    "solium": "^1.1.8"
+  },
+  "dependencies": {
+    "truffle": "5.0.4",
+    "truffle-hdwallet-provider": "dapperlabs/truffle-hdwallet-provider#v1.0.1"
+  }
+}
