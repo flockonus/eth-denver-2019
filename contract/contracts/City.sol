@@ -54,7 +54,7 @@ contract City {
     function createGame(uint _buyIn) public payable {
         require(_buyIn < 100 ether, "buy in too high");
         require(msg.value == _buyIn, "send balance");
-        uint8 _boardSize = 4;
+        uint8 _boardSize = 5;
         Game memory game = Game({
             // TODO fix those arbitrary values
             boardSize: _boardSize,
@@ -125,23 +125,23 @@ contract City {
 
     function calculateIncome(uint gameId) public {
         Game storage game = games[gameId];
-        for (uint8 col = 0; col < game.boardSize; ++col) {
-            for (uint8 row = 0; row < game.boardSize; ++row) {
+        for (uint8 row = 0; row < game.boardSize; ++row) {
+            for (uint8 col = 0; col < game.boardSize; ++col) {
                 address player;
                 uint8 zone;
                 uint32 value;
-                (player, zone, value) = getPlot(gameId, row, col);
+                (player, zone, value) = getPlot(gameId, col, row);
                 uint score = 0;
                 for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
                     int8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
                     int8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
-                    if ((deltaX >= 0 || row > 0) && (deltaX <= 0 || row < game.boardSize) &&
-                       (deltaY >= 0 || col > 0) && (deltaY <= 0 || col < game.boardSize)) {
+                    if ((deltaX >= 0 || col > 0) && (deltaX <= 0 || col < game.boardSize - 1) &&
+                       (deltaY >= 0 || row > 0) && (deltaY <= 0 || row < game.boardSize - 1)) {
                         // This is a valid neighbor so get it...
                         address neighborPlayer;
                         uint8 neighborZone;
                         uint32 neighborValue;
-                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(row) + deltaX), uint8(int8(col) + deltaY));
+                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(col) + deltaX), uint8(int8(row) + deltaY));
 
                         // ... and apply neighborhood counting rules
                         if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
