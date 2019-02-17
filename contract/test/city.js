@@ -106,6 +106,15 @@ contract('City', (accounts) => {
     await debugBoard(1, city);
   });
 
+  it('calculate income', async function() {
+    let tx;
+    tx = await city.calculateIncome(1);
+    await debugPlayers(1, city);
+    console.log(
+      tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),
+    );
+  });
+
   it('resolve bids', async function() {
     // setup a new game for this test
     const gameId = await setupGame(city, accounts);
@@ -125,9 +134,4 @@ contract('City', (accounts) => {
     );
   });
 
-  it.skip('calculate income', async function() {
-    let tx;
-    tx = await city.calculateIncome(1);
-    await debugPlayers(1, city);
-  });
 });
