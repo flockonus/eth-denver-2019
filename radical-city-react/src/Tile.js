@@ -1,26 +1,26 @@
-import React, { Component } from 'react';
-import styled from 'styled-components';
-import Bid from './modals/Bid';
+import React, { Component } from "react";
+import styled from "styled-components";
+import Bid from "./modals/Bid";
 
 const Rhombus = styled.div`
   width: 100%;
   height: 100%;
   background: purple;
-`
+`;
 
 const types = {
-  INDUSTRIAL: 'industrial',
-  RESIDENTIAL: 'residental',
-  COMMERCIAL: 'commerical'
+  INDUSTRIAL: "industrial",
+  RESIDENTIAL: "residental",
+  COMMERCIAL: "commerical"
 };
 
 class Tile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
-      ownerAddr: '0xBEEF',
-      type: '',
+      username: "",
+      ownerAddr: "0xBEEF",
+      type: "",
       rent: 0,
       showModal: false
     };

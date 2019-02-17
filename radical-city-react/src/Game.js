@@ -1,41 +1,40 @@
-import React, { Component } from 'react';
-import Button from 'react-bootstrap/Button';
-import JoinMatch from './modals/JoinMatch';
-import { createGridModel } from './utils/grid';
-import { getWeb3, getGameContractInstance } from './utils/web3';
-import Board from './components/Board';
+import React, { Component } from "react";
+import Button from "react-bootstrap/Button";
+import JoinMatch from "./modals/JoinMatch";
+import { createGridModel } from "./utils/grid";
+import { getWeb3, getGameContractInstance } from "./utils/web3";
+import Board from "./components/Board";
 
 class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      matchID: '',
+      matchID: "",
       showModal: false,
       grid: createGridModel(4),
       selectedTile: null,
       // helps to position theselected tile
-      lastClickPos: null
+      lastClickPos: null,
+      round: 0
     };
     this.handleOpen = this.handleOpen.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.tileWasClicked = this.tileWasClicked.bind(this);
   }
-  componentDidMount() {
-    // this.contractInstance = getGameContractInstance();
-    // const plotSet = this.contractInstance.plotSet({
-    // fromBlock: 0,
-    // toBlock: 'latest',
-    // });
-    // plotSet.watch((err, result) => {
-    // TODO: set state of grid whenever we receive new events
-    // });
+  async componentDidMount() {
+    this.web3 = await getWeb3();
+    this.contractInstance = getGameContractInstance();
+    const plotSet = this.contractInstance.plotSet("latest");
+    plotSet.watch((err, result) => {
+      // TODO: set state of grid whenever we receive new events
+    });
   }
   handleOpen() {
-    console.log('opening...');
+    console.log("opening...");
     this.setState({ showModal: true });
   }
   handleClose() {
-    console.log('closing...');
+    console.log("closing...");
     this.setState({ showModal: false });
   }
   createGrid() {
@@ -70,7 +69,7 @@ class Game extends Component {
   tileWasClicked(tile, ev) {
     ev.preventDefault();
 
-    console.log('tile was clicked', tile);
+    console.log("tile was clicked", tile);
     console.log(ev.clientX, ev.clientY);
     console.log(ev.screenX, ev.screenY);
 
