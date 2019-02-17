@@ -1,10 +1,11 @@
-import React, { Component } from "react";
-import Button from "react-bootstrap/Button";
-import JoinMatch from "./modals/JoinMatch";
-import { createGridModel } from "./utils/grid";
-import { getWeb3, getGameContractInstance } from "./utils/web3";
-import Board from "./components/Board";
-import Countdown from "react-countdown-now";
+import React, {Component} from 'react';
+import Button from 'react-bootstrap/Button';
+import JoinMatch from './modals/JoinMatch';
+import {createGridModel} from './utils/grid';
+import {getWeb3, getGameContractInstance} from './utils/web3';
+import Board from './components/Board';
+import Countdown from 'react-countdown-now';
+import Timer from './components/Timer';
 
 const dim = 4;
 
@@ -16,27 +17,13 @@ const promisify = inner =>
       }
 
       resolve(res);
-    })
+    }),
   );
-const renderer = ({ hours, minutes, seconds, completed }) => {
-  if (completed) {
-    // Render a completed state
-    //TODO: fire off a async call
-    return;
-  } else {
-    // Render a countdown
-    return (
-      <span>
-        {hours}:{minutes}:{seconds}
-      </span>
-    );
-  }
-};
 class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      matchID: "",
+      matchID: '',
       showModal: false,
       grid: createGridModel(dim),
       selectedTile: null,
@@ -47,8 +34,9 @@ class Game extends Component {
       round: 0,
       time: 0,
       round: 0,
+      timeRemainingInSeconds: 30000,
     };
-
+    this.endMatch = this.endMatch.bind(this);
     this.handleOpen = this.handleOpen.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.tileWasClicked = this.tileWasClicked.bind(this);
@@ -57,16 +45,15 @@ class Game extends Component {
   async componentDidMount() {
     this.web3 = await getWeb3();
     this.contractInstance = getGameContractInstance();
-    this.web3.eth.filter("latest", async (error, result) => {
-      console.log("new block");
+    this.web3.eth.filter('latest', async (error, result) => {
+      console.log('new block');
       let grid = {};
       for (let y = 0; y < dim; y++) {
         for (let x = 0; x < dim; x++) {
           const plotInfo = await promisify(cb =>
-            // returns (address owner, uint32 value, uint8 zone, uint32 income, uint32 tax) {
-            this.contractInstance.getFullPlotInfo(1, x, y, cb)
+            this.contractInstance.getFullPlotInfo(1, x, y, cb),
           );
-          const [ owner, value, zone, income, tax ] = plotInfo;
+          const [owner, value, zone, income, tax] = plotInfo;
           const id = `${x}-${y}`;
           // console.log(`result for ${id}:`, plotInfo);
           grid[id] = {
@@ -81,46 +68,55 @@ class Game extends Component {
           };
         }
       }
-      console.log("setting grid: ", grid);
-      this.setState({ grid });
+      console.log('setting grid: ', grid);
+      this.setState({grid});
     });
 
     const events = this.contractInstance.allEvents({
       fromBlock: 0,
-      toBlock: "latest"
+      toBlock: 'latest',
     });
-    events.watch(async (err, event) => {
-      console.log("new event received: ", event.event);
-      if (event.name === "PlotSet") {
-        const { round, owner, x, y, zone } = event.returnValues;
+    events.watch(async (err, result) => {
+      const {event, args} = result;
+      console.log('new event received: ', event);
+      if (event.event === 'PlotSet') {
+        const {round, owner, x, y, zone} = args;
         const grid = Object.assign({}, this.state.grid);
         grid[`${x}-${y}`] = {
           owner,
-          zone
+          zone,
         };
-        this.setState({ grid, round });
-      } else if (event.name === "NewRound") {
-        const { round } = event.returnValues;
-        this.setState({ round });
+        this.setState({grid, round});
+      } else if (event === 'NewRound') {
+        console.log('returnValues ', result);
+        const {round} = args;
+        console.log('new round event =', event);
+        this.setState({round: round.toNumber()});
       }
     });
   }
 
   handleOpen() {
-    console.log("opening...");
-    this.setState({ showModal: true });
+    console.log('opening...');
+    this.setState({showModal: true});
   }
   handleClose() {
-    console.log("closing...");
-    this.setState({ showModal: false });
+    console.log('closing...');
+    this.setState({showModal: false});
   }
+
+  endMatch() {
+    console.log('match has ended');
+    return;
+  }
+
   tileWasClicked(tile, ev) {
-    console.log("tile was clicked", tile);
+    console.log('tile was clicked', tile);
     this.setState({
       selectedTile: tile,
       lastClickPos: {
         x: ev.screenX,
-        y: ev.screenY
+        y: ev.screenY,
       },
       bid: {},
     });
@@ -133,7 +129,7 @@ class Game extends Component {
     const lastClick = this.state.lastClickPos || {};
     const pos = {
       left: `${lastClick.x - 100}px`,
-      top: `${lastClick.y - 220}px`
+      top: `${lastClick.y - 220}px`,
     };
     function close() {
       // dismiss all variables from here
@@ -148,15 +144,15 @@ class Game extends Component {
       ctx.state.bid.value = Math.ceil((tile.price + 1) * 1.2);
     }
     function onBidChange(ev) {
-      console.log("onBidChange", ev.target.value);
+      console.log('onBidChange', ev.target.value);
       // bad practice?
       ctx.state.bid.value = parseInt(ev.target.value, 10) || '';
       ctx.setState({
         bid: ctx.state.bid,
-      })
+      });
     }
     console.log('>>>', ctx.state.bid.zone);
-    
+
     if (ctx.state.bid.zone === undefined) {
       ctx.state.bid.zone = tile.zone;
     }
@@ -167,11 +163,11 @@ class Game extends Component {
       // else ctx.state.bid.zone = 1; // default new zone to residential
       ctx.setState({
         bid: ctx.state.bid,
-      })
-      console.log("onZoneChange", ctx.state.bid.zone);
+      });
+      console.log('onZoneChange', ctx.state.bid.zone);
     }
     async function sendBid() {
-      console.log("sendBid", ctx.state.bid.value, ctx.state.bid.zone);
+      console.log('sendBid', ctx.state.bid.value, ctx.state.bid.zone);
       const tx = await promisify(cb =>
         // function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) external {
         ctx.contractInstance.bid(
@@ -180,8 +176,8 @@ class Game extends Component {
           tile.y,
           ctx.state.bid.zone,
           ctx.state.bid.value,
-          cb
-        )
+          cb,
+        ),
       );
       console.log('tx sent', tx);
     }
@@ -212,19 +208,19 @@ class Game extends Component {
     );
   }
   async finishBidding() {
-    console.log("finishBidding");
+    console.log('finishBidding');
     const tx = await promisify(cb =>
       // function finishBidding(uint8 gameId, uint8 round) public returns (bool) {
       this.contractInstance.finishBidding(
         1, // gameId
         1, // round
-        cb
-      )
+        cb,
+      ),
     );
     console.log('tx sent', tx);
   }
   render() {
-    const { grid } = this.state;
+    const {grid} = this.state;
     const tiles = Object.values(grid);
     return (
       <div className="grid-container">
@@ -232,8 +228,10 @@ class Game extends Component {
         <br />
         <div>
           TIME LEFT <br />
-          <Countdown date={Date.now() + 300000} renderer={renderer} />
-          <button onClick={this.finishBidding.bind(this)}>Finish Bidding</button>
+          <Timer timeRemainingInSeconds={300000} onCompletion={this.endMatch} />
+          <button onClick={this.finishBidding.bind(this)}>
+            Finish Bidding
+          </button>
         </div>
         <Board tiles={tiles} tileClicked={this.tileWasClicked} />
         <JoinMatch
