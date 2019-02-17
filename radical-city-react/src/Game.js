@@ -26,7 +26,8 @@ class Game extends Component {
     this.contractInstance = getGameContractInstance();
     const plotSet = this.contractInstance.plotSet("latest");
     plotSet.watch((err, result) => {
-      // TODO: set state of grid whenever we receive new events
+      const { round, owner, x, y, zone } = result.returnValues;
+      const grid = this.state.grid;
     });
   }
   handleOpen() {
