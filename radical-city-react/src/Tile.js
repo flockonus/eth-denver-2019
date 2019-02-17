@@ -30,8 +30,8 @@ class Tile extends Component {
   render() {
     return (
       <div>
-        <Bid showModal={this.state.showModal} handleClose={this.handleClose} />
-        <button className="square" onClick={this.handleOpen}>
+        {/* <Bid showModal={this.state.showModal} handleClose={this.handleClose} /> */}
+        <button className="square" /*onClick={this.handleOpen}*/>
           {this.state.rent}
         </button>
       </div>

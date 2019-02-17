@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {getWeb3} from './utils/web3';
-import Ethereum from './Ethereum';
+// import Ethereum from './Ethereum';
 import Board from './Board';
 import assistInstance from './utils/blocknative';
 
@@ -29,7 +29,10 @@ class App extends Component {
     }
   }
   render() {
-    return <Board web3={this.state.web3} />;
+    return <div>
+      <h1> Radical Cities </h1>
+      <Board web3={this.state.web3} />
+    </div>
   }
 }
 export default App;
