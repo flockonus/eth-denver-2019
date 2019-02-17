@@ -25,11 +25,10 @@ class JoinMatch extends Component {
     });
   }
   sendTransaction() {
-    this.contractInstance.myStateChangingMethod(
-      'someParam1',
-      23,
-      {value: this.state.bid * 1000000000000000000, gas: 2000},
-      function(err, result) {
+    this.contractInstance.joinGame(
+      1,
+      {value: 0, gas: 200000},
+      (err, result) => {
         this.props.handleClose();
       },
     );
