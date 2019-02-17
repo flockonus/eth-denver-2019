@@ -14,6 +14,9 @@ export async function getWeb3() {
 }
 
 export function getGameContractInstance() {
+  if (!web3) {
+    return;
+  }
   if (!gameContractInstance) {
     let gameContract = web3.eth.contract(game.abi);
     gameContractInstance = gameContract.at(Config.gameContractAddr);

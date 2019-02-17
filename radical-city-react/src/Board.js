@@ -23,14 +23,14 @@ class Board extends Component {
     this.tileWasClicked = this.tileWasClicked.bind(this);
   }
   componentDidMount() {
-    this.contractInstance = getGameContractInstance();
-    const plotSet = this.coontractInstance.plotSet(
-      {some: 'args'},
-      {fromBlock: 0, toBlock: 'latest'},
-    );
-    plotSet.watch((err, result) => {
-      //TODO: set state of grid whenever we receive new events
-    });
+    // this.contractInstance = getGameContractInstance();
+    // const plotSet = this.contractInstance.plotSet({
+    // fromBlock: 0,
+    // toBlock: 'latest',
+    // });
+    // plotSet.watch((err, result) => {
+    // TODO: set state of grid whenever we receive new events
+    // });
   }
   handleOpen() {
     console.log('opening...');
