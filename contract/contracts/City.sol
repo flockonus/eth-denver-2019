@@ -39,11 +39,19 @@ contract City {
     event Join(uint indexed gameId, address player);
     event GameStart(uint256 indexed gameId);
     event PlotSet(uint indexed gameId, uint round, address owner, uint8 x, uint8 y, uint8 zone);
+
+    // DEBUG ONLY -- RM FROM PROD
+    event DebugU(string label, uint val);
     
     mapping(uint => Game) public games;
     uint public gameCount;
 
     int constant INIT_POINTS = 1000;
+    uint8 constant RESIDENTIAL = 0;
+    uint8 constant COMMERCIAL = 1;
+    uint8 constant INDUSTRIAL = 2;
+    uint8[5] INCOME = [0, 1, 3, 6, 12];
+    // int8[4][2] NEIGHBORDELTAS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
     constructor() public {
         // what?
@@ -66,13 +74,13 @@ contract City {
         });
         gameCount++;
         games[gameCount] = game;
+        emit GameCreated(gameCount, game.boardSize, game.partySize, game.joinLimitAt, game.buyIn);
+
         games[gameCount].players.push(msg.sender);
         // 1k initial balance!
         games[gameCount].balances[msg.sender] = INIT_POINTS;
-        emit Join(gameCount, msg.sender);
-        
         // _initBoard(boardId);
-        emit GameCreated(gameCount, game.boardSize, game.partySize, game.joinLimitAt, game.buyIn);
+        emit Join(gameCount, msg.sender);
     }
 
     function joinGame(uint gameId) public payable {
@@ -134,6 +142,9 @@ contract City {
 
         Plot storage currentBid = game.bids[plotId];
 
+        // we should allow bids that may be less than the current plot price
+        //   because the owner may be lowering the price of the plot at that time
+
         // incoming bid is higher than an existing bid (if any)
         if (price > currentBid.value) {
             // silently discard possible existing bid
@@ -142,8 +153,10 @@ contract City {
                 zone: zone,
                 value: price
             });
+            emit DebugU("bid got it", plotId);
         } else {
             // TODO maybe revert the loser bid?
+            emit DebugU("bid felt flat", plotId);
         }
 
         // maybe we should check user balance here BUT that would require a full round simulation, so nevermind.
@@ -159,9 +172,55 @@ contract City {
             for (uint y = 0; y < game.boardSize; y++) {
                 uint plotId = (y * game.boardSize) + x;
                 // just debug for now
-                ...TODO. .... game.bids[plotId]
+                // ...TODO. .... game.bids[plotId]
+                emit DebugU("resolve bid", plotId);
             }
         }
+    }
+
+    function calculateIncome(uint gameId) public view {
+        Game storage game = games[gameId];
+        for (uint8 col = 0; col < game.boardSize; ++col) {
+            for (uint8 row = 0; row < game.boardSize; ++row) {
+                address player;
+                uint8 zone;
+                uint32 value;
+                (player, zone, value) = getPlot(gameId, row, col);
+                uint score = 0;
+                // for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
+                //     uint8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
+                //     uint8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
+                //     if ((deltaX >= 0 || row > 0) && (deltaX <= 0 || row < game.boardSize) &&
+                //        (deltaY >= 0 || col > 0) && (deltaY <= 0 || col < game.boardSize)) {
+                //         // This is a valid neighbor so get it...
+                //         address neighborPlayer;
+                //         uint8 neighborZone;
+                //         uint32 neighborValue;
+                //         (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, row + deltaX, row + deltaY);
+
+                //         // ... and apply neighborhood counting rules
+                //         if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
+                //             score++;
+                //         } else if (zone == COMMERCIAL && neighborZone == INDUSTRIAL) {
+                //             score++;
+                //         } else if (zone == INDUSTRIAL && neighborZone == RESIDENTIAL) {
+                //             score++;
+                //         }
+                //     }
+                // }
+                // uint32 income = INCOME[score];
+                // game.balances[player] += income;
+            }
+        }
+    }
+
+    function getPlayers(uint gameId) external view returns (address[] memory, uint32[] memory) {
+        // Game storage game = games[gameId];
+        // address[] memory players = new address[](game.players.length);
+        // players.push(game.players);
+        // uint32[] memory balances = new uint32[](game.balances.length);
+        // balances.push(game.balances);
+        // return (players, balances);
     }
 
     // function _calcRules()
