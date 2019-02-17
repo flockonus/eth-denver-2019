@@ -19,8 +19,8 @@ export function createGridModel(dim) {
     }
   }
   // Some mock stuff data so we can view the state
-  grid[`0-0`].zone = 1;
-  grid[`1-0`].zone = 2;
-  grid[`2-0`].zone = 3;
+  // grid[`0-0`].zone = 1;
+  // grid[`1-0`].zone = 2;
+  // grid[`2-0`].zone = 3;
   return grid;
 }

@@ -19,11 +19,16 @@ code {
 
 .TileDetails {
   position: absolute;
-  border: 1px dashed red;
+  border: 2px dashed green;
   border-radius: 5px;
   width: 300px;
-  height: 120px;
+  height: 200px;
   background: white;
+  padding: 5px;
+}
+
+.TileDetails input {
+  width: 35px;
 }
 
 .close-btn {
