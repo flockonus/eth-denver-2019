@@ -51,9 +51,8 @@ contract City {
     uint8 constant RESIDENTIAL = 1;
     uint8 constant COMMERCIAL = 2;
     uint8 constant INDUSTRIAL = 3;
-    uint8[5] INCOME = [0, 1, 3, 6, 12];
-    int8[2][4] NEIGHBORDELTAS = [[int8(-1), int8(0)], [int8(1), int8(0)], [int8(0), int8(-1)], [int8(0), int8(1)]];
     int8 constant REZONING_FEE = 5;
+    int8 constant TAX_RATE = 20; // %
 
     constructor() public {
         // what?
@@ -247,9 +246,19 @@ contract City {
         }
     }
 
-    // TODO: refactor to use getPlotIncome()
-    // Warning: lots of duplicate code here
     function calculateIncome(uint gameId) public {
+        Game storage game = games[gameId];
+        for (uint8 row = 0; row < game.boardSize; ++row) {
+            for (uint8 col = 0; col < game.boardSize; ++col) {
+                address player;
+                uint32 income;
+                (player, income) = getPlotIncome(gameId, col, row);
+                game.balances[player] += income;
+            }
+        }
+    }
+
+    function subtractTaxes(uint gameId) public {
         Game storage game = games[gameId];
         for (uint8 row = 0; row < game.boardSize; ++row) {
             for (uint8 col = 0; col < game.boardSize; ++col) {
@@ -257,58 +266,65 @@ contract City {
                 uint8 zone;
                 uint32 value;
                 (player, zone, value) = getPlot(gameId, col, row);
-                uint score = 0;
-                emit DebugU("Checking neighbors for plotID: ", (row * game.boardSize) + col);
-                for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
-                    int8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
-                    int8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
-                    if ((deltaX >= 0 || col > 0) && (deltaX <= 0 || col < game.boardSize - 1) &&
-                       (deltaY >= 0 || row > 0) && (deltaY <= 0 || row < game.boardSize - 1)) {
-                        // This is a valid neighbor so get it...
-                        address neighborPlayer;
-                        uint8 neighborZone;
-                        uint32 neighborValue;
-                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(col) + deltaX), uint8(int8(row) + deltaY));
-
-                        // ... and apply neighborhood counting rules
-                        if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
-                            score++;
-                        } else if (zone == COMMERCIAL && neighborZone == INDUSTRIAL) {
-                            score++;
-                        } else if (zone == INDUSTRIAL && neighborZone == RESIDENTIAL) {
-                            score++;
-                        }
-                    }
-                }
-                uint32 income = INCOME[score];
-                emit DebugU("Total income: ", income);
-                game.balances[player] += income;
+                emit DebugU("Calculating tax on plotId: ", (row * game.boardSize) + col);
+                uint32 tax = calculatePlotTax(value, zone);
+                emit DebugU("Value is: ", value);
+                emit DebugU("Tax is: ", tax);
+                game.balances[player] -= tax;
             }
         }
     }
 
-    function getPlayers(uint gameId) external view returns (address[] memory, int[] memory) {
-        Game storage game = games[gameId];
-        address[] memory players = game.players;
-        int[] memory balances = new int[](players.length);
-        for (uint8 i = 0; i < players.length; ++i) {
-            balances[i] = game.balances[players[i]];
-        }
-        return (players, balances);
-    }
-
     // TODO: refactor calculateIncome() to use this
     // Warning: lots of duplicate code here
-    function getPlotIncome(uint gameId, uint8 col, uint8 row) public returns (address, uint32) {
+    function getPlotIncome(uint gameId, uint8 col, uint8 row) public view returns (address owner, uint32 income) {
+        uint8[5] memory INCOME = [0, 1, 3, 6, 12];
         address player;
         uint8 zone;
         uint32 value;
         (player, zone, value) = getPlot(gameId, col, row);
-        Game storage game = games[gameId];
 
         uint score = 0;
-        emit DebugU("Checking neighbors for plotID: ", (row * game.boardSize) + col);
+        //emit DebugU("Checking neighbors for plotID: ", (row * game.boardSize) + col);
+        score += countValuableNeighbors(gameId, zone, col, row);
+
+        income = INCOME[score];
+        //emit DebugU("Total income: ", income);
+        return (player, income);
+    }
+
+    function getFullPlotInfo(uint gameId, uint8 col, uint8 row) public view 
+        returns (address owner, uint32 value, uint8 zone, uint32 income, uint32 tax) {
+        address player;
+        (player, zone, value) = getPlot(gameId, col, row);
+        (player, income) = getPlotIncome(gameId, col, row);
+        tax = calculatePlotTax(value, zone);
         /*
+        emit DebugU("getFullPlotInfo for plotId: ", (row * game.boardSize) + col);
+        emit DebugU("  player: ", 0);
+        emit DebugU("  value: ", value);
+        emit DebugU("  zone: ", zone);
+        emit DebugU("  income: ", income);
+        emit DebugU("  tax: ", tax);
+        */
+        return (player, value, zone, income, tax);
+    }
+
+    function calculatePlotTax(uint32 value, uint8 zone) internal pure returns (uint32) {
+        uint32 tax = value * uint32(TAX_RATE) / 100;
+        if (zone != UNDEVELOPED && value > 0 && tax == 0) {
+            // Hack to make tax minimum 1
+            //emit DebugU("min tax imposed: ", 1);
+            tax = 1;
+        }
+        return tax;
+    }
+
+    function countValuableNeighbors(uint gameId, uint8 zone, uint8 col, uint8 row) internal view returns (uint8) {
+        int8[2][4] memory NEIGHBORDELTAS = [[int8(-1), int8(0)], [int8(1), int8(0)], [int8(0), int8(-1)], [int8(0), int8(1)]];
+        uint8 score = 0;
+        Game storage game = games[gameId];
+
         for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
             int8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
             int8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
@@ -318,7 +334,10 @@ contract City {
                 address neighborPlayer;
                 uint8 neighborZone;
                 uint32 neighborValue;
-                (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(col) + deltaX), uint8(int8(row) + deltaY));
+                (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(deltaX + int8(col)), uint8(deltaY + int8(row)));
+                //emit DebugU("  neighbor plotId: ", (uint8(deltaY + int8(row)) * game.boardSize) + uint8(deltaX + int8(col)));
+                //emit DebugU("  zone: ", zone);
+                //emit DebugU("  neighborZone: ", neighborZone);
 
                 // ... and apply neighborhood counting rules
                 if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
@@ -330,12 +349,19 @@ contract City {
                 }
             }
         }
-        */
-        uint32 income = INCOME[score];
-        emit DebugU("Total income: ", income);
-        return (player, income);
+        //emit DebugU("  score: ", score);
+        return score;
     }
 
+    function getPlayers(uint gameId) external view returns (address[] memory, int[] memory) {
+        Game storage game = games[gameId];
+        address[] memory players = game.players;
+        int[] memory balances = new int[](players.length);
+        for (uint8 i = 0; i < players.length; ++i) {
+            balances[i] = game.balances[players[i]];
+        }
+        return (players, balances);
+    }
 
     // function _calcRules()
 
