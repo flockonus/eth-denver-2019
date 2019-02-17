@@ -123,6 +123,7 @@ contract City {
             return true;
         }
         // Ready to move on
+        emit DebugU("Moving on with the round...", 0);
         _resolveBids(gameId);
         subtractTaxes(gameId);
         game.round++;
@@ -130,8 +131,10 @@ contract City {
         if (game.round < MAX_ROUNDS) {
             addIncome(gameId);
             emit NewRound(gameId, game.round);
+            emit DebugU("New round starting: ", game.round);
         } else {
             emit GameOver(gameId);
+            emit DebugU("Game over", 0);
         }
         return true;
         // else game over!
