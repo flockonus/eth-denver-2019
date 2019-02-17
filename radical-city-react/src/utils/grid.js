@@ -9,11 +9,11 @@ export function createGridModel(dim) {
         id,
         x,
         y,
-        price: 0,
-        owner: null,
+        price: 1,
+        owner: '0x0000000000000000000000000000000000000000',
         zone: 0,
-        // income: 0,
-        // tax: 0,
+        income: 0,
+        tax: 0,
         // can add more properties here
       }
     }

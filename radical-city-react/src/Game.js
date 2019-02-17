@@ -28,6 +28,8 @@ class Game extends Component {
       selectedTile: null,
       // helps to position theselected tile
       lastClickPos: null,
+      // temp. hold the bid
+      bid: {},
       round: 0,
       time: 0
     };
@@ -51,20 +53,21 @@ class Game extends Component {
       for (let y = 0; y < dim; y++) {
         for (let x = 0; x < dim; x++) {
           const plotInfo = await promisify(cb =>
+            // returns (address owner, uint32 value, uint8 zone, uint32 income, uint32 tax) {
             this.contractInstance.getFullPlotInfo(1, x, y, cb)
           );
-          const { owner, value, zone, income, tax } = plotInfo;
+          const [ owner, value, zone, income, tax ] = plotInfo;
           const id = `${x}-${y}`;
-          console.log(`result for ${id}: ${plotInfo}`);
+          // console.log(`result for ${id}:`, plotInfo);
           grid[id] = {
             id,
             x,
             y,
-            price: value,
             owner,
-            zone,
-            income,
-            tax,
+            price: value.toNumber(),
+            zone: zone.toNumber(),
+            income: income.toNumber(),
+            tax: tax.toNumber(),
           };
         }
       }
@@ -130,53 +133,69 @@ class Game extends Component {
       lastClickPos: {
         x: ev.screenX,
         y: ev.screenY
-      }
+      },
+      bid: {},
     });
   }
   // display tile details pop-over
   tileDetails(tile) {
     if (tile === null) return;
     const ctx = this;
+    // const tileBid = Object.assign({}, tile);
     const lastClick = this.state.lastClickPos || {};
     const pos = {
       left: `${lastClick.x - 100}px`,
       top: `${lastClick.y - 220}px`
     };
     function close() {
+      // dismiss all variables from here
       this.setState({
         selectedTile: null,
-        lastClickPos: null
+        lastClickPos: null,
+        bid: {},
       });
     }
     // TODO confirm this multiplier
-    let bid = Math.ceil((tile.price + 1) * 1.2);
+    if (ctx.state.bid.value === undefined) {
+      ctx.state.bid.value = Math.ceil((tile.price + 1) * 1.2);
+    }
     function onBidChange(ev) {
       console.log("onBidChange", ev.target.value);
+      // bad practice?
+      ctx.state.bid.value = parseInt(ev.target.value, 10) || '';
+      ctx.setState({
+        bid: ctx.state.bid,
+      })
+    }
+    console.log('>>>', ctx.state.bid.zone);
+    
+    if (ctx.state.bid.zone === undefined) {
+      ctx.state.bid.zone = tile.zone;
+    }
+    function onZoneChange(ev) {
+      ctx.state.bid.zone = ev.target.value;
+      // if (ev.target.value.toLowerCase() === 'i') ctx.state.bid.zone = 3; // industrial
+      // else if (ev.target.value.toLowerCase() === 'c') ctx.state.bid.zone = 2; // commercial
+      // else ctx.state.bid.zone = 1; // default new zone to residential
+      ctx.setState({
+        bid: ctx.state.bid,
+      })
+      console.log("onZoneChange", ctx.state.bid.zone);
     }
     async function sendBid() {
-      console.log("sendBid", bid);
+      console.log("sendBid", ctx.state.bid.value, ctx.state.bid.zone);
       const tx = await promisify(cb =>
+        // function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) external {
         ctx.contractInstance.bid(
           1,
           tile.x,
           tile.y,
-          tile.zone,
-          bid,
+          ctx.state.bid.zone,
+          ctx.state.bid.value,
           cb
         )
       );
-      // const { owner, value, zone, income, tax } = plotInfo;
-
-      // function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) external {
-      // const tx = await ctx.contractInstance.bid(
-      //   1,
-      //   tile.x,
-      //   tile.y,
-      //   tile.zone,
-      //   bid
-      // )
-      console.log('tx', tx);
-      
+      console.log('tx sent', tx);
     }
     return (
       <div className="TileDetails" style={pos}>
@@ -189,9 +208,15 @@ class Game extends Component {
         <div>
           <input
             type="text"
-            name="bidVal"
-            value={bid}
+            placeholder="BID VALUE"
+            value={ctx.state.bid.value}
             onChange={ev => onBidChange(ev)}
+          />
+          <input
+            type="input"
+            placeholder="ZONE"
+            value={ctx.state.bid.zone}
+            onChange={ev => onZoneChange(ev)}
           />
           <button onClick={() => sendBid()}>BID</button>
         </div>
