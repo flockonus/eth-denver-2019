@@ -125,6 +125,14 @@ class Game extends Component {
       bid: {},
     });
   }
+  close() {
+    // dismiss all variables from here
+    this.setState({
+      selectedTile: null,
+      lastClickPos: null,
+      bid: {},
+    });
+  }
   // display tile details pop-over
   tileDetails(tile) {
     if (tile === null) return;
@@ -135,14 +143,6 @@ class Game extends Component {
       left: `${lastClick.x - 100}px`,
       top: `${lastClick.y - 220}px`
     };
-    function close() {
-      // dismiss all variables from here
-      this.setState({
-        selectedTile: null,
-        lastClickPos: null,
-        bid: {},
-      });
-    }
     // TODO confirm this multiplier
     if (ctx.state.bid.value === undefined) {
       ctx.state.bid.value = Math.ceil((tile.price + 1) * 1.2);
@@ -184,10 +184,11 @@ class Game extends Component {
         )
       );
       console.log('tx sent', tx);
+      ctx.close();
     }
     return (
       <div className="TileDetails" style={pos}>
-        <div className="close-btn" onClick={close.bind(this)}>
+        <div className="close-btn" onClick={ctx.close.bind(ctx)}>
           X
         </div>
         <div>zone: {tile.zone}</div>
@@ -196,14 +197,14 @@ class Game extends Component {
         <div>tax: {tile.tax}</div>
         <div>price: {tile.price}</div>
         <div>
-          zone:<input
+          BID:<input
             size="2"
             type="number"
             placeholder="BID VALUE"
             value={ctx.state.bid.value}
             onChange={ev => onBidChange(ev)}
           />
-          bid:<input
+          ZONE:<input
             size="2"
             type="number"
             placeholder="ZONE"
@@ -237,6 +238,7 @@ class Game extends Component {
         <div>
           TIME LEFT <br />
           <Countdown date={Date.now() + 300000} renderer={renderer} />
+          <br/>
           <button onClick={this.finishBidding.bind(this)}>Finish Bidding</button>
         </div>
         <Board tiles={tiles} tileClicked={this.tileWasClicked} />
