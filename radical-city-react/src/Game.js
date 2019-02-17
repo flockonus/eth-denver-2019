@@ -5,28 +5,79 @@ import { createGridModel } from "./utils/grid";
 import { getWeb3, getGameContractInstance } from "./utils/web3";
 import Board from "./components/Board";
 
+const dim = 4;
+
+const promisify = inner =>
+  new Promise((resolve, reject) =>
+    inner((err, res) => {
+      if (err) {
+        reject(err);
+      }
+
+      resolve(res);
+    })
+  );
+
 class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
       matchID: "",
       showModal: false,
-      grid: createGridModel(4),
+      grid: createGridModel(dim),
       selectedTile: null,
       // helps to position theselected tile
       lastClickPos: null,
-      round: 0
+      round: 0,
+      time: 0
     };
+    this.startTimer = this.startTimer.bind(this);
+    this.stopTimer = this.stopTimer.bind(this);
+    this.resetTimer = this.resetTimer.bind(this);
+
     this.handleOpen = this.handleOpen.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.tileWasClicked = this.tileWasClicked.bind(this);
   }
+
   async componentDidMount() {
+    this.startTimer();
+
     this.web3 = await getWeb3();
     this.contractInstance = getGameContractInstance();
-    const events = this.contractInstance.allEvents("latest");
-    events.watch((err, event) => {
-      console.log("new event received: ", event.name);
+    this.web3.eth.filter("latest", async (error, result) => {
+      console.log("new block");
+      let grid = {};
+      for (let y = 0; y < dim; y++) {
+        for (let x = 0; x < dim; x++) {
+          const plotInfo = await promisify(cb =>
+            this.contractInstance.getFullPlotInfo(1, x, y, cb)
+          );
+          const { owner, value, zone, income, tax } = plotInfo;
+          const id = `${x}-${y}`;
+          console.log(`result for ${id}: ${plotInfo}`);
+          grid[id] = {
+            id,
+            x,
+            y,
+            price: value,
+            owner,
+            zone,
+            income,
+            tax,
+          };
+        }
+      }
+      console.log("setting grid: ", grid);
+      this.setState({ grid });
+    });
+
+    const events = this.contractInstance.allEvents({
+      fromBlock: 0,
+      toBlock: "latest"
+    });
+    events.watch(async (err, event) => {
+      console.log("new event received: ", event.event);
       if (event.name === "PlotSet") {
         const { round, owner, x, y, zone } = event.returnValues;
         const grid = Object.assign({}, this.state.grid);
@@ -36,9 +87,34 @@ class Game extends Component {
         };
         this.setState({ grid, round });
       } else if (event.name === "NewRound") {
+        const { round } = event.returnValues;
+        this.setState({ round });
+        this.resetTimer();
       }
     });
   }
+  startTimer() {
+    this.setState({
+      isOn: true,
+      time: this.state.time,
+      start: Date.now() - this.state.time
+    });
+    this.timer = setInterval(
+      () =>
+        this.setState({
+          time: Math.round(Date.now() - this.state.start)
+        }),
+      1000
+    );
+  }
+  stopTimer() {
+    this.setState({ isOn: false });
+    clearInterval(this.timer);
+  }
+  resetTimer() {
+    this.setState({ time: 0, isOn: false });
+  }
+
   handleOpen() {
     console.log("opening...");
     this.setState({ showModal: true });
@@ -75,18 +151,30 @@ class Game extends Component {
     // TODO confirm this multiplier
     let bid = Math.ceil((tile.price + 1) * 1.2);
     function onBidChange(ev) {
-      console.log('onBidChange', ev.target.value);
+      console.log("onBidChange", ev.target.value);
     }
     async function sendBid() {
-      console.log('sendBid', bid);
+      console.log("sendBid", bid);
+      const tx = await promisify(cb =>
+        ctx.contractInstance.bid(
+          1,
+          tile.x,
+          tile.y,
+          tile.zone,
+          bid,
+          cb
+        )
+      );
+      // const { owner, value, zone, income, tax } = plotInfo;
+
       // function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) external {
-      const tx = await ctx.contractInstance.bid(
-        1,
-        tile.x,
-        tile.y,
-        tile.zone,
-        bid
-      )
+      // const tx = await ctx.contractInstance.bid(
+      //   1,
+      //   tile.x,
+      //   tile.y,
+      //   tile.zone,
+      //   bid
+      // )
       console.log('tx', tx);
       
     }
@@ -99,7 +187,12 @@ class Game extends Component {
         <div>owner: {tile.owner}</div>
         <div>price: {tile.price}</div>
         <div>
-          <input type="text" name="bidVal" value={bid} onChange={(ev) => onBidChange(ev)}></input>
+          <input
+            type="text"
+            name="bidVal"
+            value={bid}
+            onChange={ev => onBidChange(ev)}
+          />
           <button onClick={() => sendBid()}>BID</button>
         </div>
       </div>
@@ -111,6 +204,8 @@ class Game extends Component {
     return (
       <div className="grid-container">
         <label>ROUND {this.state.round}</label>
+        <br />
+        <label>TIME LEFT {this.state.time}</label>
         <Board tiles={tiles} tileClicked={this.tileWasClicked} />
         <JoinMatch
           showModal={this.state.showModal}
