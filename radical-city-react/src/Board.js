@@ -29,9 +29,10 @@ class Board extends Component {
       this.setState({blocknumber: result});
     });
     this.contractInstance = getGameContractInstance();
-    const plotSet = this.contractInstance.PlotSet('latest');
-    plotSet.watch((err, result) => {
-      // TODO: set state of grid whenever we receive new events
+    var events = this.contractInstance.allEvents('latest');
+    events.watch(function(error, result) {
+      console.log('event caught: ', result.event);
+      console.log('full event: ', result);
     });
   }
   handleOpen() {
