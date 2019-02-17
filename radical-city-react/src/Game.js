@@ -4,6 +4,7 @@ import JoinMatch from "./modals/JoinMatch";
 import { createGridModel } from "./utils/grid";
 import { getWeb3, getGameContractInstance } from "./utils/web3";
 import Board from "./components/Board";
+import Countdown from "react-countdown-now";
 
 const dim = 4;
 
@@ -17,7 +18,20 @@ const promisify = inner =>
       resolve(res);
     })
   );
-
+const renderer = ({ hours, minutes, seconds, completed }) => {
+  if (completed) {
+    // Render a completed state
+    //TODO: fire off a async call
+    return;
+  } else {
+    // Render a countdown
+    return (
+      <span>
+        {hours}:{minutes}:{seconds}
+      </span>
+    );
+  }
+};
 class Game extends Component {
   constructor(props) {
     super(props);
@@ -31,11 +45,9 @@ class Game extends Component {
       // temp. hold the bid
       bid: {},
       round: 0,
-      time: 0
+      time: 0,
+      round: 0,
     };
-    this.startTimer = this.startTimer.bind(this);
-    this.stopTimer = this.stopTimer.bind(this);
-    this.resetTimer = this.resetTimer.bind(this);
 
     this.handleOpen = this.handleOpen.bind(this);
     this.handleClose = this.handleClose.bind(this);
@@ -43,8 +55,6 @@ class Game extends Component {
   }
 
   async componentDidMount() {
-    this.startTimer();
-
     this.web3 = await getWeb3();
     this.contractInstance = getGameContractInstance();
     this.web3.eth.filter("latest", async (error, result) => {
@@ -92,30 +102,8 @@ class Game extends Component {
       } else if (event.name === "NewRound") {
         const { round } = event.returnValues;
         this.setState({ round });
-        this.resetTimer();
       }
     });
-  }
-  startTimer() {
-    this.setState({
-      isOn: true,
-      time: this.state.time,
-      start: Date.now() - this.state.time
-    });
-    this.timer = setInterval(
-      () =>
-        this.setState({
-          time: Math.round(Date.now() - this.state.start)
-        }),
-      1000
-    );
-  }
-  stopTimer() {
-    this.setState({ isOn: false });
-    clearInterval(this.timer);
-  }
-  resetTimer() {
-    this.setState({ time: 0, isOn: false });
   }
 
   handleOpen() {
@@ -242,8 +230,11 @@ class Game extends Component {
       <div className="grid-container">
         <label>ROUND {this.state.round}</label>
         <br />
-        <label>TIME LEFT {this.state.time}</label>
-        <button onClick={this.finishBidding.bind(this)}>Finish Bidding</button>
+        <div>
+          TIME LEFT <br />
+          <Countdown date={Date.now() + 300000} renderer={renderer} />
+          <button onClick={this.finishBidding.bind(this)}>Finish Bidding</button>
+        </div>
         <Board tiles={tiles} tileClicked={this.tileWasClicked} />
         <JoinMatch
           showModal={this.state.showModal}
