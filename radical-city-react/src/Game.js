@@ -223,6 +223,18 @@ class Game extends Component {
       </div>
     );
   }
+  async finishBidding() {
+    console.log("finishBidding");
+    const tx = await promisify(cb =>
+      // function finishBidding(uint8 gameId, uint8 round) public returns (bool) {
+      this.contractInstance.finishBidding(
+        1, // gameId
+        1, // round
+        cb
+      )
+    );
+    console.log('tx sent', tx);
+  }
   render() {
     const { grid } = this.state;
     const tiles = Object.values(grid);
@@ -231,6 +243,7 @@ class Game extends Component {
         <label>ROUND {this.state.round}</label>
         <br />
         <label>TIME LEFT {this.state.time}</label>
+        <button onClick={this.finishBidding.bind(this)}>Finish Bidding</button>
         <Board tiles={tiles} tileClicked={this.tileWasClicked} />
         <JoinMatch
           showModal={this.state.showModal}
