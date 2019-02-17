@@ -48,14 +48,7 @@ class Game extends Component {
     this.setState({ showModal: false });
   }
   tileWasClicked(tile, ev) {
-    // debugger
-    // ev.preventDefault();
-
     console.log("tile was clicked", tile);
-    console.log(ev.clientX, ev.clientY);
-    console.log(ev.screenX, ev.screenY);
-
-    // this.state.selectedTile = tile;
     this.setState({
       selectedTile: tile,
       lastClickPos: {
@@ -67,6 +60,7 @@ class Game extends Component {
   // display tile details pop-over
   tileDetails(tile) {
     if (tile === null) return;
+    const ctx = this;
     const lastClick = this.state.lastClickPos || {};
     const pos = {
       left: `${lastClick.x - 100}px`,
@@ -78,12 +72,23 @@ class Game extends Component {
         lastClickPos: null
       });
     }
-    let bid = (tile.price + 1) * 1.2;
+    // TODO confirm this multiplier
+    let bid = Math.ceil((tile.price + 1) * 1.2);
     function onBidChange(ev) {
       console.log('onBidChange', ev.target.value);
     }
-    function sendBid() {
-      console.log('sendBid');
+    async function sendBid() {
+      console.log('sendBid', bid);
+      // function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) external {
+      const tx = await ctx.contractInstance.bid(
+        1,
+        tile.x,
+        tile.y,
+        tile.zone,
+        bid
+      )
+      console.log('tx', tx);
+      
     }
     return (
       <div className="TileDetails" style={pos}>
