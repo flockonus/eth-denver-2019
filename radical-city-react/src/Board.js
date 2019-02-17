@@ -101,7 +101,7 @@ class Board extends Component {
     }
     return (
       <div className="TileDetails" style={pos}>
-        <div class="close-btn" onClick={close.bind(this)}>
+        <div className="close-btn" onClick={close.bind(this)}>
           X
         </div>
         <div>zone: {tile.zone}</div>
