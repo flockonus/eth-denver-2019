@@ -35,6 +35,7 @@ class Game extends Component {
           zone
         };
         this.setState({ grid, round });
+      } else if (event.name === "NewRound") {
       }
     });
   }
@@ -118,9 +119,9 @@ class Game extends Component {
   render() {
     const { grid } = this.state;
     const tiles = Object.values(grid);
-    // console.log('re render Board');
     return (
       <div className="grid-container">
+        <label>ROUND {this.state.round}</label>
         <Board tiles={tiles} />
         <JoinMatch
           showModal={this.state.showModal}
