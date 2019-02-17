@@ -81,7 +81,7 @@ contract('City', (accounts) => {
     tx = await city._setPlot(1, 3, 1, ZONES.INDUSTRIAL, p2, 1);
     tx = await city._setPlot(1, 4, 1, ZONES.COMMERCIAL, p2, 1);
 
-    tx = await city._setPlot(1, 0, 2, ZONES.INDUSTRIAL, p1, 5);
+    tx = await city._setPlot(1, 0, 2, ZONES.RESIDENTIAL, p1, 5);
     tx = await city._setPlot(1, 1, 2, ZONES.COMMERCIAL, p1, 4);
     tx = await city._setPlot(1, 2, 2, ZONES.INDUSTRIAL, p1, 3);
     tx = await city._setPlot(1, 3, 2, ZONES.RESIDENTIAL, p1, 2);
@@ -92,6 +92,7 @@ contract('City', (accounts) => {
     tx = await city._setPlot(1, 4, 3, ZONES.RESIDENTIAL, p2, 4);
 
     tx = await city._setPlot(1, 0, 4, ZONES.RESIDENTIAL, p1, 10);
+    tx = await city._setPlot(1, 1, 4, ZONES.INDUSTRIAL, p1, 10);
     tx = await city._setPlot(1, 3, 4, ZONES.RESIDENTIAL, p1, 10);
 
     ppLogs(tx);
