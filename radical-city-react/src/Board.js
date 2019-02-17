@@ -14,6 +14,8 @@ class Board extends Component {
       showModal: false,
       grid: createGridModel(4),
       selectedTile: null,
+      // helps to position theselected tile
+      lastClickPos: null,
     };
     this.handleOpen = this.handleOpen.bind(this);
     this.handleClose = this.handleClose.bind(this);
@@ -44,7 +46,7 @@ class Board extends Component {
           className="square"
           key={`cell${x}-${y}`}
           web3={this.props.web3}
-          onClick={() => this.tileWasClicked(tile)}
+          onClick={(ev) => this.tileWasClicked(tile, ev)}
         >
           <div className={`building zone-${tile.zone}`}>
             {tile.price}
@@ -54,17 +56,38 @@ class Board extends Component {
     }
     return (<div className="board-row" key={`row-${y}`}>{row}</div>);
   }
-  tileWasClicked(tile) {
-    console.log('tileWasClicked', tile);
+  tileWasClicked(tile, ev) {
+    ev.preventDefault();
+
+    console.log('tile was clicked', tile);
+    console.log(ev.clientX, ev.clientY);
+    console.log(ev.screenX, ev.screenY);
+
     // this.state.selectedTile = tile;
     this.setState({
       selectedTile: tile,
+      lastClickPos: {
+        x: ev.screenX,
+        y: ev.screenY,
+      }
     });
   }
   tileDetails(tile) {
-    tile = tile || {};
+    if (tile === null) return;
+    const lastClick = this.state.lastClickPos || {};
+    const pos = {
+      left:`${lastClick.x - 100}px`,
+      top:`${lastClick.y - 220}px`,
+    };
+    function close() {
+      this.setState({
+        selectedTile: null,
+        lastClickPos: null,
+      })
+    }
     return (
-      <div className="TileDetails">
+      <div className="TileDetails" style={pos}>
+          <div class="close-btn" onClick={close.bind(this)}>X</div>
           <div>zone: {tile.zone}</div>
           <div>owner: {tile.owner}</div>
           <div>price: {tile.price}</div>
@@ -74,7 +97,7 @@ class Board extends Component {
   render() {
     // console.log('re render Board');
     return (
-      <div>
+      <div className="grid-container">
         {this.createGrid()}
         <JoinMatch
           showModal={this.state.showModal}

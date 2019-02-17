@@ -18,6 +18,10 @@ ul {
   margin-bottom: 10px;
 }
 
+.grid-container {
+  margin: 100px;
+}
+
 .square {
   height: 68px;
   width: 68px;
@@ -51,8 +55,23 @@ ul {
 
 
 .TileDetails {
+  position: absolute;
   border: 1px dashed red;
+  border-radius: 5px;
   width: 200px;
+  height: 120px;
+}
+
+.close-btn {
+  background: rgb(159, 159, 249);
+  border: 1px solid white;
+  border-radius: 50%;
+  text-align: center;
+  padding: 2px;
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  right: 0;
 }
 
 .zone-0 {
