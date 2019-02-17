@@ -29,8 +29,8 @@ const Unsquisher = styled.div`
   transform: scaleY(2);
 `;
 
-const Tile = ({ id, tile }) => (
-  <Rhombus id={id}>
+const Tile = ({ id, tile, tileClicked }) => (
+  <Rhombus id={id} onClick={(ev) => tileClicked(tile, ev)}>
     <Unrotator>
       <Unsquisher>
         <Building type={tile.zone} />

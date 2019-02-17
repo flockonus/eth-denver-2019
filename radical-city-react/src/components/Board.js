@@ -17,11 +17,11 @@ const Rotator = styled.div`
   height: 400px;
 `;
 
-const Board = ({ tiles }) => (
+const Board = ({ tiles, tileClicked }) => (
   <Squisher>
     <Rotator>
       {tiles.map((tile, index) => (
-        <Tile tile={tile} key={index} id={index} />
+        <Tile tile={tile} key={index} id={index} tileClicked={tileClicked} />
       ))}
     </Rotator>
   </Squisher>
