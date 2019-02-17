@@ -29,12 +29,8 @@ class Tile extends Component {
   }
   render() {
     return (
-      <div style={styles.tile}>
-        <Bid
-          showModal={this.state.showModal}
-          handleOpen={this.handleOpen}
-          handleClose={this.handleClose}
-        />
+      <div>
+        <Bid showModal={this.state.showModal} handleClose={this.handleClose} />
         <button className="square" onClick={this.handleOpen}>
           {this.state.rent}
         </button>
@@ -43,8 +39,3 @@ class Tile extends Component {
   }
 }
 export default Tile;
-const styles = {
-  tile: {
-    backgroundColor: "red"
-  }
-};

@@ -2,15 +2,13 @@ import Config from '../config';
 import React, {Component} from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
-import Dropdown from 'react-bootstrap/Dropdown';
 import {getWeb3} from '../utils/web3';
 
-class Bid extends Component {
+class JoinMatch extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      propertyType: '',
-      bid: '',
+      matchID: '',
     };
     this.sendTransaction = this.sendTransaction.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -43,27 +41,17 @@ class Bid extends Component {
       <>
         <Modal show={showModal} onHide={handleClose}>
           <Modal.Header closeButton>
-            <Modal.Title>Your bid</Modal.Title>
+            <Modal.Title>Join Match</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <label> Bid (ETH) </label>
+            <label> Match ID </label>
             <input
-              name="bid"
+              name="matchID"
               type="number"
-              value={this.state.bid}
+              value={this.state.matchID}
               onChange={this.handleInputChange}
               className="form-control"
             />
-            <label> Type </label>
-            <select
-              name="propertyType"
-              value={this.state.type}
-              onChange={this.handleInputChange}
-              className="form-control">
-              <option value="residential">Residential</option>
-              <option value="industrial">Industrial</option>
-              <option value="commmerical">Commerical</option>
-            </select>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>
@@ -81,4 +69,4 @@ class Bid extends Component {
     );
   }
 }
-export default Bid;
+export default JoinMatch;

@@ -1,11 +1,13 @@
-import Web3 from 'web3';
+import assistInstance from './blocknative';
 
-export function getWeb3() {
-  if (window.ethereum) {
-    return new Web3(window.ethereum);
-  } else if (window.web3) {
-    return new Web3(window.web3.currentProvider);
-  } else alert('You have to install MetaMask!');
+let web3;
+
+export async function getWeb3() {
+  if (!web3) {
+    let state = await assistInstance.getState();
+    web3 = state.web3Instance;
+  }
+  return web3;
 }
 
 export function getNetworkID(web3) {
