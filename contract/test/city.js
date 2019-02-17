@@ -12,6 +12,10 @@ const ZONES = {
   INDUSTRIAL: 3,
 };
 
+function destructPlotId(plotId) {
+  return [];
+}
+
 function cropAddress(addr) {
   return '..' + addr.substring(39);
 }
@@ -113,14 +117,19 @@ contract('City', (accounts) => {
     // p1 bids on a terrain
     let price = 10;
     tx = await city.bid(gameId, 0, 0, ZONES.RESIDENTIAL, price);
-    // console.log(tx.logs);
+    console.log(tx.logs);
     tx = await city.bid(gameId, 0, 0, ZONES.RESIDENTIAL, price - 1);
-    // console.log(tx.logs);
-    tx = await city.bid(gameId, 0, 0, ZONES.RESIDENTIAL, price - 1);
+    console.log(tx.logs);
+    tx = await city.bid(gameId, 2, 0, ZONES.RESIDENTIAL, price - 1);
 
     tx = await city._resolveBids(gameId);
     console.log(
-      tx.logs.map((ev) => ({ ev: ev.args[0], plotId: ev.args[1].toNumber() })),
+      tx.logs.map((ev) => ({ ev: ev.args[0], value: ev.args[1].toNumber() })),
+    );
+
+    tx = await city._resolveBids(gameId);
+    console.log(
+      tx.logs.map((ev) => ({ ev: ev.args[0], value: ev.args[1].toNumber() })),
     );
   });
 
