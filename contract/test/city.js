@@ -67,11 +67,11 @@ async function fillBoard(city, accounts) {
   tx = await city._setPlot(1, 3, 0, ZONES.RESIDENTIAL, p1, 7);
   tx = await city._setPlot(1, 4, 0, ZONES.INDUSTRIAL, p1, 1);
 
-  tx = await city._setPlot(1, 0, 1, ZONES.COMMERCIAL, p2, 1);
-  tx = await city._setPlot(1, 1, 1, ZONES.RESIDENTIAL, p2, 1);
-  tx = await city._setPlot(1, 2, 1, ZONES.COMMERCIAL, p2, 1);
-  tx = await city._setPlot(1, 3, 1, ZONES.INDUSTRIAL, p2, 1);
-  tx = await city._setPlot(1, 4, 1, ZONES.COMMERCIAL, p2, 1);
+  tx = await city._setPlot(1, 0, 1, ZONES.COMMERCIAL, p2, 5);
+  tx = await city._setPlot(1, 1, 1, ZONES.RESIDENTIAL, p2, 5);
+  tx = await city._setPlot(1, 2, 1, ZONES.COMMERCIAL, p2, 5);
+  tx = await city._setPlot(1, 3, 1, ZONES.INDUSTRIAL, p2, 5);
+  tx = await city._setPlot(1, 4, 1, ZONES.COMMERCIAL, p2, 5);
 
   tx = await city._setPlot(1, 0, 2, ZONES.RESIDENTIAL, p1, 5);
   tx = await city._setPlot(1, 1, 2, ZONES.COMMERCIAL, p1, 4);
@@ -126,7 +126,7 @@ contract('City', (accounts) => {
 
   it('resolve bids', async function() {
     // setup a new game for this test
-    const gameId = await setupGame(city, accounts);
+    const gameId = 1; // await setupGame(city, accounts);
     await fillBoard(city, accounts);
     let tx;
 
@@ -145,15 +145,27 @@ contract('City', (accounts) => {
       tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
     );
 
-    console.log("should succeed, current value is 7");
-    tx = await city.bid(gameId, 3, 0, ZONES.RESIDENTIAL, price, {from: accounts[0]});
+    console.log("should succeed and be rezoned if resolved");
+    tx = await city.bid(gameId, 3, 0, ZONES.COMMERCIAL, price, {from: accounts[0]});
+    console.log(
+      tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
+    );
+
+    console.log("Should succeed as a leading bid but not resolve because it's too low");
+    tx = await city.bid(gameId, 3, 1, ZONES.INDUSTRIAL, 2, {from: accounts[0]});
+    console.log(
+      tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
+    );
+
+    console.log("Coin toss case for p1");
+    tx = await city.bid(gameId, 4, 2, ZONES.INDUSTRIAL, 5, {from: accounts[0]});
     console.log(
       tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
     );
 
     console.log("Placing bids for p2")
     console.log("should fail: equal bid, not owner");
-    tx = await city.bid(gameId, 0, 0, ZONES.RESIDENTIAL, price, {from: accounts[1]});
+    tx = await city.bid(gameId, 0, 0, ZONES.INDUSTRIAL, price, {from: accounts[1]});
     console.log(
       tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
     );
@@ -164,21 +176,24 @@ contract('City', (accounts) => {
       tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
     );
 
-    console.log("Should succeed: overbid p1");
-    tx = await city.bid(gameId, 3, 0, ZONES.RESIDENTIAL, price + 1, {from: accounts[1]});
+    console.log("Should succeed: overbid p1, and should be rezoned");
+    tx = await city.bid(gameId, 3, 0, ZONES.INDUSTRIAL, price + 1, {from: accounts[1]});
     console.log(
       tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
     );
 
-    console.log("Should succeed; Devalue p2's own property");
+    console.log("Should succeed; Devalue p2's own property. Not rezoned.");
     tx = await city.bid(gameId, 4, 3, ZONES.RESIDENTIAL, 2, {from: accounts[1]});
     console.log(
       tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
     );
 
-    // todo: submit leading bid but not high enough to take effect
-    // todo: coin toss case over undeveloped plot
-  
+    console.log("Coin toss case for p2");
+    tx = await city.bid(gameId, 4, 2, ZONES.COMMERCIAL, 5, {from: accounts[1]});
+    console.log(
+      tx.logs.map((ev) => ({ n: ev.args[0], v: ev.args[1].toNumber() })),
+    );
+
     console.log("Resolve bids and update grid, player balances");
     tx = await city._resolveBids(gameId);
     console.log(

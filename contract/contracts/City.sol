@@ -190,9 +190,9 @@ contract City {
         require(game.boardSize > 1, "game doesnt exist");
         require(game.startedAt > 0, "game didnt start");
 
-        for (uint x = 0; x < game.boardSize; x++) {
-            for (uint y = 0; y < game.boardSize; y++) {
-                uint plotId = (y * game.boardSize) + x;
+        for (uint8 y = 0; y < game.boardSize; y++) {
+            for (uint8 x = 0; x < game.boardSize; x++) {
+                uint32 plotId = (y * game.boardSize) + x;
                 emit DebugU("Resolving bids for plotId: ", plotId);
 
                 Plot storage _bid = game.bids[plotId];
@@ -202,18 +202,23 @@ contract City {
                     Plot storage plot = game.plots[plotId];
 
                     if (_bid.value > plot.value) {
-                        emit DebugU("  bid won!", _bid.value);
+                        emit DebugU("  bid won; old value: ", plot.value);
+                        emit DebugU("  bid won; old zone: ", plot.zone);
+                        emit DebugU("  bid won; new value: ", _bid.value);
+                        emit DebugU("  bid won; new zone: ", _bid.zone);
                         if (plot.zone != _bid.zone && plot.zone != UNDEVELOPED) {
-                            game.balances[plot.owner] -= REZONING_FEE;
+                            game.balances[_bid.owner] -= REZONING_FEE;
                             emit DebugU("  Rezoning from: ", game.plots[plotId].zone);
                             emit DebugU("  Rezoning to: ", _bid.zone);
-                            emit DebugU("  Rezoning fee paid, new balance: ", uint(game.balances[plot.owner]));
+                            emit DebugU("  Rezoning fee paid, new balance: ", uint(game.balances[_bid.owner]));
                         }
                         if (plot.owner != _bid.owner) {
                             // Property changed hands and so must money
                             game.balances[plot.owner] += _bid.value;
                             game.balances[_bid.owner] -= _bid.value;
                             emit DebugU("  money transferred, value: ", _bid.value);
+                            emit DebugU("  money transferred, old owner balance: ", uint(game.balances[plot.owner]));
+                            emit DebugU("  money transferred, new owner balance: ", uint(game.balances[_bid.owner]));
                         }
                         // Replace the plot
                         game.plots[plotId] = Plot({
@@ -251,6 +256,7 @@ contract City {
                 uint32 value;
                 (player, zone, value) = getPlot(gameId, col, row);
                 uint score = 0;
+                emit DebugU("Checking neighbors for plotID: ", (row * game.boardSize) + col);
                 for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
                     int8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
                     int8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
@@ -273,6 +279,7 @@ contract City {
                     }
                 }
                 uint32 income = INCOME[score];
+                emit DebugU("Total income: ", income);
                 game.balances[player] += income;
             }
         }
