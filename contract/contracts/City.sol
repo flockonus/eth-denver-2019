@@ -53,6 +53,7 @@ contract City {
     uint8 constant INDUSTRIAL = 3;
     uint8[5] INCOME = [0, 1, 3, 6, 12];
     int8[2][4] NEIGHBORDELTAS = [[int8(-1), int8(0)], [int8(1), int8(0)], [int8(0), int8(-1)], [int8(0), int8(1)]];
+    int8 constant REZONING_FEE = 5;
 
     constructor() public {
         // what?
@@ -140,8 +141,10 @@ contract City {
         require(game.balances[msg.sender] > price, "balance cant go negative");
 
         uint plotId = (y * game.boardSize) + x;
+        Plot storage plot = game.plots[plotId];
 
         Plot storage currentBid = game.bids[plotId];
+        bool applyBid = false;
 
         // we should allow bids that may be less than the current plot price
         //   because the owner may be lowering the price of the plot at that time
@@ -149,15 +152,33 @@ contract City {
         // incoming bid is higher than an existing bid (if any)
         if (price > currentBid.value) {
             // silently discard possible existing bid
+            applyBid = true;
+        } else if (price == currentBid.value) {
+            if (currentBid.owner == plot.owner) {
+                // If bids are even the owner takes precedence
+                applyBid = true;
+            } else {
+                // Two even bids, neither of whom is the plot's owner: randomly choose one
+                uint rand = uint(blockhash(block.number - 1)) % 2;
+                applyBid = (rand == 1);
+                if (applyBid) emit DebugU("coinflip won! value: ", price);
+            }
+        } else {
+            emit DebugU("bid was less than existing bid, existing value: ", currentBid.value);
+            emit DebugU("bid was less than existing bid, current value: ", price);
+        }
+        if (applyBid) {
             game.bids[plotId] = Plot({
                 owner: msg.sender,
                 zone: zone,
                 value: price
             });
-            emit DebugU("bid got it", plotId);
+            emit DebugU("leading bid placed, plotId: ", plotId);
+            emit DebugU("leading bid placed, value: ", price);
         } else {
             // TODO maybe revert the loser bid?
-            emit DebugU("bid felt flat", plotId);
+            emit DebugU("bid failed, plotId: ", plotId);
+            emit DebugU("bid failed, value: ", price);
         }
 
         // maybe we should check user balance here BUT that would require a full round simulation, so nevermind.
@@ -172,20 +193,46 @@ contract City {
         for (uint x = 0; x < game.boardSize; x++) {
             for (uint y = 0; y < game.boardSize; y++) {
                 uint plotId = (y * game.boardSize) + x;
-                emit DebugU("resolve _bid", plotId);
+                emit DebugU("Resolving bids for plotId: ", plotId);
 
                 Plot storage _bid = game.bids[plotId];
                 
                 if (_bid.value > 0) {
                     emit DebugU("  bid:", _bid.value);
                     Plot storage plot = game.plots[plotId];
+
                     if (_bid.value > plot.value) {
                         emit DebugU("  bid won!", _bid.value);
+                        if (plot.zone != _bid.zone && plot.zone != UNDEVELOPED) {
+                            game.balances[plot.owner] -= REZONING_FEE;
+                            emit DebugU("  Rezoning from: ", game.plots[plotId].zone);
+                            emit DebugU("  Rezoning to: ", _bid.zone);
+                            emit DebugU("  Rezoning fee paid, new balance: ", uint(game.balances[plot.owner]));
+                        }
+                        if (plot.owner != _bid.owner) {
+                            // Property changed hands and so must money
+                            game.balances[plot.owner] += _bid.value;
+                            game.balances[_bid.owner] -= _bid.value;
+                            emit DebugU("  money transferred, value: ", _bid.value);
+                        }
+                        // Replace the plot
                         game.plots[plotId] = Plot({
                             owner: _bid.owner,
                             zone: _bid.zone,
                             value: _bid.value
                         });
+                    } else if (plot.owner == _bid.owner) {
+                        // Owner successfully reduced the price of their plot
+                        emit DebugU("  Price reduction from: ", game.plots[plotId].value);
+                        emit DebugU("  Price reduction to: ", _bid.value);
+                        if (plot.zone != _bid.zone && plot.zone != UNDEVELOPED) {
+                            game.balances[plot.owner] -= REZONING_FEE;
+                            emit DebugU("  Rezoning from: ", game.plots[plotId].zone);
+                            emit DebugU("  Rezoning to: ", _bid.zone);
+                            emit DebugU("  Rezoning fee paid, new balance: ", uint(game.balances[plot.owner]));
+                        }
+                        game.plots[plotId].value = _bid.value;
+                        game.plots[plotId].zone = _bid.zone;
                     } else {
                         emit DebugU("  bid lost", _bid.value);
                     }
