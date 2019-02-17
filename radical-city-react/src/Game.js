@@ -192,16 +192,20 @@ class Game extends Component {
         </div>
         <div>zone: {tile.zone}</div>
         <div>owner: {tile.owner}</div>
+        <div>income: {tile.income}</div>
+        <div>tax: {tile.tax}</div>
         <div>price: {tile.price}</div>
         <div>
-          <input
-            type="text"
+          zone:<input
+            size="2"
+            type="number"
             placeholder="BID VALUE"
             value={ctx.state.bid.value}
             onChange={ev => onBidChange(ev)}
           />
-          <input
-            type="input"
+          bid:<input
+            size="2"
+            type="number"
             placeholder="ZONE"
             value={ctx.state.bid.zone}
             onChange={ev => onZoneChange(ev)}
