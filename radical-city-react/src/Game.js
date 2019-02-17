@@ -1,13 +1,11 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import Button from 'react-bootstrap/Button';
-import Tile from './Tile';
 import JoinMatch from './modals/JoinMatch';
-import {createGridModel} from './utils/grid';
-import {getWeb3, getGameContractInstance} from './utils/web3';
+import { createGridModel } from './utils/grid';
+import { getWeb3, getGameContractInstance } from './utils/web3';
+import Board from './components/Board';
 
-import './board.css';
-
-class Board extends Component {
+class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -16,33 +14,29 @@ class Board extends Component {
       grid: createGridModel(4),
       selectedTile: null,
       // helps to position theselected tile
-      lastClickPos: null,
-      blockNumber: 0,
+      lastClickPos: null
     };
     this.handleOpen = this.handleOpen.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.tileWasClicked = this.tileWasClicked.bind(this);
   }
-  async componentDidMount() {
-    this.web3 = await getWeb3();
-    this.web3.eth.filter('latest', (error, result) => {
-      console.log('new block: ', result);
-      this.setState({blockNumber: result});
-    });
-    this.contractInstance = getGameContractInstance();
-    var events = this.contractInstance.allEvents('latest');
-    events.watch(function(error, result) {
-      console.log('event caught: ', result.event);
-      console.log('full event: ', result);
-    });
+  componentDidMount() {
+    // this.contractInstance = getGameContractInstance();
+    // const plotSet = this.contractInstance.plotSet({
+    // fromBlock: 0,
+    // toBlock: 'latest',
+    // });
+    // plotSet.watch((err, result) => {
+    // TODO: set state of grid whenever we receive new events
+    // });
   }
   handleOpen() {
     console.log('opening...');
-    this.setState({showModal: true});
+    this.setState({ showModal: true });
   }
   handleClose() {
     console.log('closing...');
-    this.setState({showModal: false});
+    this.setState({ showModal: false });
   }
   createGrid() {
     const table = [];
@@ -61,9 +55,10 @@ class Board extends Component {
           className="square"
           key={`cell${x}-${y}`}
           web3={this.props.web3}
-          onClick={ev => this.tileWasClicked(tile, ev)}>
+          onClick={ev => this.tileWasClicked(tile, ev)}
+        >
           <div className={`building zone-${tile.zone}`}>{tile.price}</div>
-        </div>,
+        </div>
       );
     }
     return (
@@ -84,8 +79,8 @@ class Board extends Component {
       selectedTile: tile,
       lastClickPos: {
         x: ev.screenX,
-        y: ev.screenY,
-      },
+        y: ev.screenY
+      }
     });
   }
   tileDetails(tile) {
@@ -93,17 +88,17 @@ class Board extends Component {
     const lastClick = this.state.lastClickPos || {};
     const pos = {
       left: `${lastClick.x - 100}px`,
-      top: `${lastClick.y - 220}px`,
+      top: `${lastClick.y - 220}px`
     };
     function close() {
       this.setState({
         selectedTile: null,
-        lastClickPos: null,
+        lastClickPos: null
       });
     }
     return (
       <div className="TileDetails" style={pos}>
-        <div className="close-btn" onClick={close.bind(this)}>
+        <div class="close-btn" onClick={close.bind(this)}>
           X
         </div>
         <div>zone: {tile.zone}</div>
@@ -113,10 +108,12 @@ class Board extends Component {
     );
   }
   render() {
+    const { grid } = this.state;
+    const tiles = Object.values(grid);
+    // console.log('re render Board');
     return (
       <div className="grid-container">
-        <label> Block number: {this.state.blockNumber} </label>
-        {this.createGrid()}
+        <Board tiles={tiles} />
         <JoinMatch
           showModal={this.state.showModal}
           handleClose={this.handleClose}
@@ -129,4 +126,4 @@ class Board extends Component {
     );
   }
 }
-export default Board;
+export default Game;

@@ -127,20 +127,11 @@ contract('City', (accounts) => {
 
   it('set some plots', async function(){ await fillBoard(city, accounts); });
 
-  console.log("Add income to all players");
+  console.log("Calculate income on entire board");
   it('calculate income', async function() {
     // The above board configuration should yield +18 income for p1, +36 income for p2
     let tx;
-    tx = await city.addIncome(gameId);
-    await debugPlayers(gameId, city);
-    console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
-  });
-
-  console.log("Calculate and subtract taxes on entire board");
-  it('subtract taxes', async function() {
-    // The above board configuration should yield +18 income for p1, +36 income for p2
-    let tx;
-    tx = await city.subtractTaxes(gameId);
+    tx = await city.calculateIncome(gameId);
     await debugPlayers(gameId, city);
     console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
   });
@@ -149,30 +140,15 @@ contract('City', (accounts) => {
   it('calculate individual plot income', async function() {
     let tx;
     tx = await city.getPlotIncome(gameId, 0, 0);
-    console.log(tx);
+    console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
     tx = await city.getPlotIncome(gameId, 1, 1);
-    console.log(tx);
+    console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
     tx = await city.getPlotIncome(gameId, 2, 2);
-    console.log(tx);
+    console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
     tx = await city.getPlotIncome(gameId, 3, 3);
-    console.log(tx);
+    console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
     tx = await city.getPlotIncome(gameId, 4, 4);
-    console.log(tx);
-  });
-
-  console.log("Get full info for specific plots");
-  it('Get full info for specific plots', async function() {
-    let tx;
-    tx = await city.getFullPlotInfo(gameId, 0, 0);
-    console.log(tx);
-    tx = await city.getFullPlotInfo(gameId, 1, 1);
-    console.log(tx);
-    tx = await city.getFullPlotInfo(gameId, 2, 2);
-    console.log(tx);
-    tx = await city.getFullPlotInfo(gameId, 3, 3);
-    console.log(tx);
-    tx = await city.getFullPlotInfo(gameId, 4, 4);
-    console.log(tx);
+    console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
   });
 
   it('resolve bids', async function() {
