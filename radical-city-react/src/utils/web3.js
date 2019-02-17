@@ -1,6 +1,9 @@
 import assistInstance from './blocknative';
+import Config from '../config/';
+import abi from '../../../contract/releases/rinkeby-1/City.json';
 
 let web3;
+let gameContractInstance;
 
 export async function getWeb3() {
   if (!web3) {
@@ -10,27 +13,10 @@ export async function getWeb3() {
   return web3;
 }
 
-export function getNetworkID(web3) {
-  web3.version.getNetwork((err, netId) => {
-    switch (netId) {
-      case '1':
-        console.log('This is mainnet');
-        break;
-      case '2':
-        console.log('This is the deprecated Morden test network.');
-        break;
-      case '3':
-        console.log('This is the ropsten test network.');
-        break;
-      case '4':
-        console.log('This is the Rinkeby test network.');
-        break;
-      case '42':
-        console.log('This is the Kovan test network.');
-        break;
-      default:
-        console.log('This is an unknown network.');
-    }
-    return netId;
-  });
+export function getGameContractInstance() {
+  if (!gameContractInstance) {
+    let gameContract = web3.eth.Contract(abi);
+    gameContractInstance = gameContract.at(Config.gameContractAddr);
+  }
+  return gameContractInstance;
 }

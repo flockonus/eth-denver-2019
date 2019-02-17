@@ -12,7 +12,6 @@ class App extends Component {
       network: -1,
       blockNumber: 0,
       timer: 0,
-      web3: '',
     };
   }
 
@@ -29,10 +28,12 @@ class App extends Component {
     }
   }
   render() {
-    return <div>
-      <h1> Radical Cities </h1>
-      <Board web3={this.state.web3} />
-    </div>
+    return (
+      <div>
+        <h1> Radical Cities </h1>
+        <Board />
+      </div>
+    );
   }
 }
 export default App;

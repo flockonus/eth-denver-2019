@@ -29,7 +29,7 @@ class Bid extends Component {
     this.web3.eth.sendTransaction(
       {
         from: this.web3.eth.accounts[0],
-        to: Config.gameContract,
+        to: Config.gameContractAddr,
         value: this.state.bid * 1000000000000000000,
       },
       (err, tx) => {
