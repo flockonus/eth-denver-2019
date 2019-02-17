@@ -19,18 +19,17 @@ ul {
 }
 
 .square {
-  background: #fff;
+  height: 68px;
+  width: 68px;
   border: 1px solid #999;
   float: left;
   font-size: 12px;
   font-weight: bold;
   line-height: 68px;
-  height: 68px;
-  margin-right: -1px;
-  margin-top: -1px;
+  /* margin-right: -1px; */
+  /* margin-top: -1px; */
   padding: 0;
   text-align: center;
-  width: 68px;
 }
 
 .square:focus {
@@ -48,4 +47,26 @@ ul {
 
 .game-info {
   margin-left: 20px;
+}
+
+
+.TileDetails {
+  border: 1px dashed red;
+  width: 200px;
+}
+
+.zone-0 {
+  background-color: #FFF;
+}
+
+.zone-1 {
+  background-color: yellow;
+}
+
+.zone-2 {
+  background-color: gold;
+}
+
+.zone-3 {
+  background-color: grey;
 }

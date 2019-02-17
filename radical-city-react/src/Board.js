@@ -61,8 +61,18 @@ class Board extends Component {
       selectedTile: tile,
     });
   }
+  tileDetails(tile) {
+    tile = tile || {};
+    return (
+      <div className="TileDetails">
+          <div>zone: {tile.zone}</div>
+          <div>owner: {tile.owner}</div>
+          <div>price: {tile.price}</div>
+      </div>
+    );
+  }
   render() {
-    console.log('re render Board');
+    // console.log('re render Board');
     return (
       <div>
         {this.createGrid()}
@@ -73,9 +83,7 @@ class Board extends Component {
         <Button variant="primary" onClick={this.handleOpen}>
           Join a match
         </Button>
-        <div className="TileDetails">
-          
-        </div>
+        {this.tileDetails(this.state.selectedTile)}
       </div>
     );
   }
