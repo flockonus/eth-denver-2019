@@ -1,5 +1,5 @@
 const Config = {
-  gameContractAddr: '0x04d9c9017e3c531598c9e81cb0b03b560e477f57',
+  gameContractAddr: '0x88ad5650fecb3a52aa33a7955a3820e1f53bb5ab',
   networkId: 4,
   blockNativeAPIKey:
     process.env.BLOCK_NATIVE_API_KEY || '64825f22-6a27-454b-ae2d-c1f2fa8e6fab',
