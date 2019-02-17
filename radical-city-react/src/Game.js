@@ -121,37 +121,9 @@ class Game extends Component {
     console.log("closing...");
     this.setState({ showModal: false });
   }
-  createGrid() {
-    const table = [];
-    for (let y = 0; y < 4; y++) {
-      table.push(this.createRow(y));
-    }
-    // debugger
-    return <div>{table}</div>;
-  }
-  createRow(y) {
-    const row = [];
-    for (let x = 0; x < 4; x++) {
-      const tile = this.state.grid[`${x}-${y}`];
-      row.push(
-        <div
-          className="square"
-          key={`cell${x}-${y}`}
-          web3={this.props.web3}
-          onClick={ev => this.tileWasClicked(tile, ev)}
-        >
-          <div className={`building zone-${tile.zone}`}>{tile.price}</div>
-        </div>
-      );
-    }
-    return (
-      <div className="board-row" key={`row-${y}`}>
-        {row}
-      </div>
-    );
-  }
   tileWasClicked(tile, ev) {
-    ev.preventDefault();
+    // debugger
+    // ev.preventDefault();
 
     console.log("tile was clicked", tile);
     console.log(ev.clientX, ev.clientY);
@@ -166,6 +138,7 @@ class Game extends Component {
       }
     });
   }
+  // display tile details pop-over
   tileDetails(tile) {
     if (tile === null) return;
     const lastClick = this.state.lastClickPos || {};
@@ -179,14 +152,30 @@ class Game extends Component {
         lastClickPos: null
       });
     }
+    let bid = (tile.price + 1) * 1.2;
+    function onBidChange(ev) {
+      console.log("onBidChange", ev.target.value);
+    }
+    function sendBid() {
+      console.log("sendBid");
+    }
     return (
       <div className="TileDetails" style={pos}>
-        <div class="close-btn" onClick={close.bind(this)}>
+        <div className="close-btn" onClick={close.bind(this)}>
           X
         </div>
         <div>zone: {tile.zone}</div>
         <div>owner: {tile.owner}</div>
         <div>price: {tile.price}</div>
+        <div>
+          <input
+            type="text"
+            name="bidVal"
+            value={bid}
+            onChange={ev => onBidChange(ev)}
+          />
+          <button onClick={() => sendBid()}>BID</button>
+        </div>
       </div>
     );
   }
@@ -198,7 +187,7 @@ class Game extends Component {
         <label>ROUND {this.state.round}</label>
         <br />
         <label>TIME LEFT {this.state.time}</label>
-        <Board tiles={tiles} />
+        <Board tiles={tiles} tileClicked={this.tileWasClicked} />
         <JoinMatch
           showModal={this.state.showModal}
           handleClose={this.handleClose}

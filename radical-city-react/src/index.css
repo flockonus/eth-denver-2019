@@ -16,3 +16,25 @@ code {
 * {
   outline: none !important;
 }
+
+.TileDetails {
+  position: absolute;
+  border: 1px dashed red;
+  border-radius: 5px;
+  width: 200px;
+  height: 120px;
+  background: white;
+}
+
+.close-btn {
+  background: rgb(159, 159, 249);
+  border: 1px solid white;
+  border-radius: 50%;
+  text-align: center;
+  padding: 2px;
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  right: 0;
+  cursor: pointer;
+}
