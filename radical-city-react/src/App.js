@@ -13,7 +13,7 @@ class App extends Component {
       isConnected: false,
       network: -1,
       blockNumber: 0,
-        timer: 0,
+      timer: 0,
     };
     this.web3 = web3;
   }
@@ -32,14 +32,7 @@ class App extends Component {
     });
   }
   render() {
-    return (
-      // <Ethereum
-      // isConnected={this.state.isConnected}
-      // network={this.state.network}
-      // blockNumber={this.state.blockNumber}
-      // />
-      <Board web3={this.state.web3} />
-    );
+    return <Board web3={this.state.web3} />;
   }
 }
 export default App;

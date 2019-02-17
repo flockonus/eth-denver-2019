@@ -1,28 +1,81 @@
+import Config from '../config';
 import React, {Component} from 'react';
+import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal';
+import Dropdown from 'react-bootstrap/Dropdown';
+import {getWeb3} from '../utils/web3';
 
-const types = {
-  INDUSTRIAL: 'industrial',
-  RESIDENTIAL: 'residental',
-  COMMERCIAL: 'commerical',
-};
+const web3 = getWeb3();
 
 class Bid extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
-      ownerAddr: '0xBEEF',
-      type: '',
-      rent: 0,
+      propertyType: '',
+      bid: '',
     };
+    this.sendTransaction = this.sendTransaction.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
+  }
+
+  handleInputChange(event) {
+    this.setState({
+      [event.target.name]: event.target.value,
+    });
+  }
+  sendTransaction() {
+    web3.eth.sendTransaction(
+      {
+        from: web3.eth.accounts[0],
+        to: Config.gameContract,
+        value: this.state.bid * 1000000000000000000,
+      },
+      (err, tx) => {
+        this.props.handleClose();
+      },
+    );
   }
   render() {
+    const {showModal, handleClose} = this.props;
     return (
-      <div>
-        <button className="square" onClick={this.props.onClick}>
-          {this.state.rent}
-        </button>
-      </div>
+      <>
+        <Modal show={showModal} onHide={handleClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>Your bid</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <label> Bid (ETH) </label>
+            <input
+              name="bid"
+              type="number"
+              value={this.state.bid}
+              onChange={this.handleInputChange}
+              className="form-control"
+            />
+            <label> Type </label>
+            <select
+              name="propertyType"
+              value={this.state.type}
+              onChange={this.handleInputChange}
+              className="form-control">
+              <option value="residential">Residential</option>
+              <option value="industrial">Industrial</option>
+              <option value="commmerical">Commerical</option>
+            </select>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Close
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              onClick={this.sendTransaction}>
+              Submit
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </>
     );
   }
 }

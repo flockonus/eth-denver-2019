@@ -6,9 +6,10 @@ function ppLogs(tx) {
 }
 
 const ZONES = {
-  RESIDENTIAL: 0,
-  COMMERCIAL: 1,
-  INDUSTRIAL: 2,
+  UNDEVELOPED: 0,
+  RESIDENTIAL: 1,
+  COMMERCIAL: 2,
+  INDUSTRIAL: 3,
 };
 
 function cropAddress(addr) {
@@ -17,16 +18,17 @@ function cropAddress(addr) {
 
 // a plot obj from SC
 function ppPlot(plot) {
-  let zone = 'R';
-  if (plot[1].eq(1)) zone = 'C';
-  if (plot[1].eq(2)) zone = 'I';
+  let zone = 'U';
+  if (plot[1].eq(1)) zone = 'R';
+  if (plot[1].eq(2)) zone = 'C';
+  if (plot[1].eq(3)) zone = 'I';
 
   return `${cropAddress(plot[0])} | ${zone} | ${plot[2].toNumber()}`;
 }
 
 async function debugBoard(gameId, city) {
-  for (let x = 0; x < 4; x++) {
-    for (let y = 0; y < 4; y++) {
+  for (let x = 0; x < 5; x++) {
+    for (let y = 0; y < 5; y++) {
       const plot = await city.getPlot(gameId, x, y);
       console.log(`[${x}, ${y}]`, 'plot', ppPlot(plot));
     }
@@ -34,13 +36,10 @@ async function debugBoard(gameId, city) {
 }
 
 async function debugPlayers(gameId, city) {
-  let players = [];
-  let balances = [];
   console.log(`Players and balances:`);
-  for (let i = 0; i < players.length; ++i) {
-    // (players, balances) = await city.getPlayers(gameId);
-    let player = players[i];
-    console.log(`player ${player}; balance ${balances[player]}`);
+  const playerinfo = await city.getPlayers(gameId);
+  for (let i = 0; i < playerinfo[0].length; ++i) {
+    console.log(`player ${playerinfo[0][i]}; balance ${playerinfo[1][i]}`);
   }
 }
 
@@ -76,9 +75,31 @@ contract('City', (accounts) => {
   it('set some plots', async function() {
     //
     let tx;
-    let price = 10;
-    tx = await city._setPlot(1, 0, 0, ZONES.RESIDENTIAL, p1, price);
-    tx = await city._setPlot(1, 3, 3, ZONES.RESIDENTIAL, p1, price);
+    tx = await city._setPlot(1, 0, 0, ZONES.RESIDENTIAL, p1, 4);
+    tx = await city._setPlot(1, 1, 0, ZONES.COMMERCIAL, p1, 6);
+    tx = await city._setPlot(1, 2, 0, ZONES.INDUSTRIAL, p1, 4);
+    tx = await city._setPlot(1, 3, 0, ZONES.RESIDENTIAL, p1, 7);
+    tx = await city._setPlot(1, 4, 0, ZONES.INDUSTRIAL, p1, 1);
+
+    tx = await city._setPlot(1, 0, 1, ZONES.COMMERCIAL, p2, 1);
+    tx = await city._setPlot(1, 1, 1, ZONES.RESIDENTIAL, p2, 1);
+    tx = await city._setPlot(1, 2, 1, ZONES.COMMERCIAL, p2, 1);
+    tx = await city._setPlot(1, 3, 1, ZONES.INDUSTRIAL, p2, 1);
+    tx = await city._setPlot(1, 4, 1, ZONES.COMMERCIAL, p2, 1);
+
+    tx = await city._setPlot(1, 0, 2, ZONES.INDUSTRIAL, p1, 5);
+    tx = await city._setPlot(1, 1, 2, ZONES.COMMERCIAL, p1, 4);
+    tx = await city._setPlot(1, 2, 2, ZONES.INDUSTRIAL, p1, 3);
+    tx = await city._setPlot(1, 3, 2, ZONES.RESIDENTIAL, p1, 2);
+
+    tx = await city._setPlot(1, 0, 3, ZONES.COMMERCIAL, p2, 1);
+    tx = await city._setPlot(1, 2, 3, ZONES.RESIDENTIAL, p2, 2);
+    tx = await city._setPlot(1, 3, 3, ZONES.INDUSTRIAL, p2, 3);
+    tx = await city._setPlot(1, 4, 3, ZONES.RESIDENTIAL, p2, 4);
+
+    tx = await city._setPlot(1, 0, 4, ZONES.RESIDENTIAL, p1, 10);
+    tx = await city._setPlot(1, 3, 4, ZONES.RESIDENTIAL, p1, 10);
+
     ppLogs(tx);
 
     await debugBoard(1, city);
