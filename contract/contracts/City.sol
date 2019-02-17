@@ -14,6 +14,8 @@ contract City {
         uint64 startedAt;
         // price in wei for players to join
         uint128 buyIn;
+        // Count for how many players have finished bidding
+        uint8 playersDoneBidding;
         // just a list of players
         address[] players;
         // plots of land
@@ -39,6 +41,8 @@ contract City {
     event Join(uint indexed gameId, address player);
     event GameStart(uint256 indexed gameId);
     event PlotSet(uint indexed gameId, uint round, address owner, uint8 x, uint8 y, uint8 zone);
+    event NewRound(uint indexed gameId, uint round);
+    event GameOver(uint indexed gameId);
 
     // DEBUG ONLY -- RM FROM PROD
     event DebugU(string label, uint val);
@@ -47,12 +51,15 @@ contract City {
     uint public gameCount;
 
     int constant INIT_POINTS = 1000;
+
     uint8 constant UNDEVELOPED = 0;
     uint8 constant RESIDENTIAL = 1;
     uint8 constant COMMERCIAL = 2;
     uint8 constant INDUSTRIAL = 3;
-    int8 constant REZONING_FEE = 5;
-    int8 constant TAX_RATE = 20; // %
+
+    uint8 constant REZONING_FEE = 5;
+    uint8 constant TAX_RATE = 20; // %
+    uint8 constant MAX_ROUNDS = 20;
 
     constructor() public {
         // what?
@@ -71,7 +78,8 @@ contract City {
             joinLimitAt: uint64(now + 1 hours),
             startedAt: 0,
             buyIn: uint128(_buyIn),
-            players: new address[](0)
+            players: new address[](0),
+            playersDoneBidding: 0
         });
         gameCount++;
         games[gameCount] = game;
@@ -100,6 +108,33 @@ contract City {
             game.startedAt = uint64(now);
             emit GameStart(gameId);
         }
+    }
+
+    // This function is called by each client once the player has submitted all their bids (or timed out)
+    // Once the last player submits their bids, taxes are charged and income is added (unless the game is over)
+    function finishBidding(uint8 gameId, uint8 round) public returns (bool) {
+        Game storage game = games[gameId];
+        game.playersDoneBidding++;
+        if (game.playersDoneBidding < game.players.length) {
+            return false;
+        }
+        if (round < game.round) {
+            // the round was already completed
+            return true;
+        }
+        // Ready to move on
+        _resolveBids(gameId);
+        subtractTaxes(gameId);
+        game.round++;
+        game.playersDoneBidding = 0;
+        if (game.round < MAX_ROUNDS) {
+            addIncome(gameId);
+            emit NewRound(gameId, game.round);
+        } else {
+            emit GameOver(gameId);
+        }
+        return true;
+        // else game over!
     }
 
     /// @dev debug so we can set any cell
