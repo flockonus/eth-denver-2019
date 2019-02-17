@@ -132,7 +132,7 @@ contract City {
     }
 
     /// @notice any player can put a bid for that round, only the top one per square will stay
-    function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) public {
+    function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) external {
         Game storage game = games[gameId];
         require(game.boardSize > 1, "game doesnt exist");
         require(game.startedAt > 0, "game didnt start");
@@ -172,9 +172,25 @@ contract City {
         for (uint x = 0; x < game.boardSize; x++) {
             for (uint y = 0; y < game.boardSize; y++) {
                 uint plotId = (y * game.boardSize) + x;
-                // just debug for now
-                // ...TODO. .... game.bids[plotId]
-                emit DebugU("resolve bid", plotId);
+                emit DebugU("resolve _bid", plotId);
+
+                Plot storage _bid = game.bids[plotId];
+                
+                if (_bid.value > 0) {
+                    emit DebugU("  bid:", _bid.value);
+                    Plot storage plot = game.plots[plotId];
+                    if (_bid.value > plot.value) {
+                        emit DebugU("  bid won!", _bid.value);
+                        game.plots[plotId] = Plot({
+                            owner: _bid.owner,
+                            zone: _bid.zone,
+                            value: _bid.value
+                        });
+                    } else {
+                        emit DebugU("  bid lost", _bid.value);
+                    }
+                    delete game.bids[plotId];
+                }
             }
         }
     }
