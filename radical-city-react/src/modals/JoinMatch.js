@@ -2,7 +2,7 @@ import Config from '../config';
 import React, {Component} from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
-import {getWeb3} from '../utils/web3';
+import {getWeb3, getGameContractInstance} from '../utils/web3';
 
 class JoinMatch extends Component {
   constructor(props) {
@@ -16,6 +16,7 @@ class JoinMatch extends Component {
 
   async componentDidMount() {
     this.web3 = await getWeb3();
+    this.contractInstance = getGameContractInstance();
   }
 
   handleInputChange(event) {
@@ -24,16 +25,16 @@ class JoinMatch extends Component {
     });
   }
   sendTransaction() {
-    this.web3.eth.sendTransaction(
-      {
-        from: this.web3.eth.accounts[0],
-        to: Config.gameContractAddr,
-        value: this.state.bid * 1000000000000000000,
-      },
-      (err, tx) => {
-        this.props.handleClose();
-      },
-    );
+    // this.web3.eth.sendTransaction(
+    // {
+    // from: this.web3.eth.accounts[0],
+    // to: Config.gameContractAddr,
+    // value: this.state.bid * 1000000000000000000,
+    // },
+    // (err, tx) => {
+    // this.props.handleClose();
+    // },
+    // );
   }
   render() {
     const {showModal, handleClose} = this.props;
