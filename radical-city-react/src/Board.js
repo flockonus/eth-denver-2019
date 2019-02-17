@@ -17,20 +17,22 @@ class Board extends Component {
       selectedTile: null,
       // helps to position theselected tile
       lastClickPos: null,
+      blockNumber: 0,
     };
     this.handleOpen = this.handleOpen.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.tileWasClicked = this.tileWasClicked.bind(this);
   }
-  componentDidMount() {
-    // this.contractInstance = getGameContractInstance();
-    // const plotSet = this.contractInstance.plotSet({
-    // fromBlock: 0,
-    // toBlock: 'latest',
-    // });
-    // plotSet.watch((err, result) => {
-    // TODO: set state of grid whenever we receive new events
-    // });
+  async componentDidMount() {
+    this.web3 = await getWeb3();
+    this.web3.eth.filter('latest', (error, result) => {
+      this.setState({blocknumber: result});
+    });
+    this.contractInstance = getGameContractInstance();
+    const plotSet = this.contractInstance.PlotSet('latest');
+    plotSet.watch((err, result) => {
+      // TODO: set state of grid whenever we receive new events
+    });
   }
   handleOpen() {
     console.log('opening...');
@@ -109,9 +111,9 @@ class Board extends Component {
     );
   }
   render() {
-    // console.log('re render Board');
     return (
       <div className="grid-container">
+        <label> Block number: {this.state.blockNumber} </label>
         {this.createGrid()}
         <JoinMatch
           showModal={this.state.showModal}
