@@ -16,16 +16,16 @@ class App extends Component {
   }
 
   componentDidMount() {
-    // if (typeof window !== 'undefined') {
-    //   assistInstance
-    //     .onboard()
-    //     .then(async success => {
-    //       this.web3 = await getWeb3();
-    //     })
-    //     .catch(function(error) {
-    //       console.log(error);
-    //     });
-    // }
+    if (typeof window !== 'undefined') {
+      assistInstance
+        .onboard()
+        .then(async success => {
+          this.web3 = await getWeb3();
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    }
   }
   render() {
     return (
