@@ -212,7 +212,7 @@ contract City {
                             emit DebugU("  Rezoning to: ", _bid.zone);
                             emit DebugU("  Rezoning fee paid, new balance: ", uint(game.balances[_bid.owner]));
                         }
-                        if (plot.owner != _bid.owner) {
+                        if (plot.owner != _bid.owner && plot.zone != UNDEVELOPED) {
                             // Property changed hands and so must money
                             game.balances[plot.owner] += _bid.value;
                             game.balances[_bid.owner] -= _bid.value;
@@ -247,6 +247,8 @@ contract City {
         }
     }
 
+    // TODO: refactor to use getPlotIncome()
+    // Warning: lots of duplicate code here
     function calculateIncome(uint gameId) public {
         Game storage game = games[gameId];
         for (uint8 row = 0; row < game.boardSize; ++row) {
@@ -294,6 +296,46 @@ contract City {
         }
         return (players, balances);
     }
+
+    // TODO: refactor calculateIncome() to use this
+    // Warning: lots of duplicate code here
+    function getPlotIncome(uint gameId, uint8 col, uint8 row) public returns (address, uint32) {
+        address player;
+        uint8 zone;
+        uint32 value;
+        (player, zone, value) = getPlot(gameId, col, row);
+        Game storage game = games[gameId];
+
+        uint score = 0;
+        emit DebugU("Checking neighbors for plotID: ", (row * game.boardSize) + col);
+        /*
+        for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
+            int8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
+            int8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
+            if ((deltaX >= 0 || col > 0) && (deltaX <= 0 || col < game.boardSize - 1) &&
+                (deltaY >= 0 || row > 0) && (deltaY <= 0 || row < game.boardSize - 1)) {
+                // This is a valid neighbor so get it...
+                address neighborPlayer;
+                uint8 neighborZone;
+                uint32 neighborValue;
+                (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(col) + deltaX), uint8(int8(row) + deltaY));
+
+                // ... and apply neighborhood counting rules
+                if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
+                    score++;
+                } else if (zone == COMMERCIAL && neighborZone == INDUSTRIAL) {
+                    score++;
+                } else if (zone == INDUSTRIAL && neighborZone == RESIDENTIAL) {
+                    score++;
+                }
+            }
+        }
+        */
+        uint32 income = INCOME[score];
+        emit DebugU("Total income: ", income);
+        return (player, income);
+    }
+
 
     // function _calcRules()
 
