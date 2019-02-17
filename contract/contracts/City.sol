@@ -246,7 +246,7 @@ contract City {
         }
     }
 
-    function calculateIncome(uint gameId) public {
+    function addIncome(uint gameId) public {
         Game storage game = games[gameId];
         for (uint8 row = 0; row < game.boardSize; ++row) {
             for (uint8 col = 0; col < game.boardSize; ++col) {
@@ -275,8 +275,6 @@ contract City {
         }
     }
 
-    // TODO: refactor calculateIncome() to use this
-    // Warning: lots of duplicate code here
     function getPlotIncome(uint gameId, uint8 col, uint8 row) public view returns (address owner, uint32 income) {
         uint8[5] memory INCOME = [0, 1, 3, 6, 12];
         address player;

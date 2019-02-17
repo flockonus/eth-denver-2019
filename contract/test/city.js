@@ -127,11 +127,11 @@ contract('City', (accounts) => {
 
   it('set some plots', async function(){ await fillBoard(city, accounts); });
 
-  console.log("Calculate income on entire board");
+  console.log("Add income to all players");
   it('calculate income', async function() {
     // The above board configuration should yield +18 income for p1, +36 income for p2
     let tx;
-    tx = await city.calculateIncome(gameId);
+    tx = await city.addIncome(gameId);
     await debugPlayers(gameId, city);
     console.log(tx.logs.map((ev) => (ev.args[0] + ev.args[1].toNumber())),);
   });
