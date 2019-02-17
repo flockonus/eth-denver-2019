@@ -218,7 +218,7 @@ class Game extends Component {
       // function finishBidding(uint8 gameId, uint8 round) public returns (bool) {
       this.contractInstance.finishBidding(
         1, // gameId
-        1, // round
+        (this.state.round || 0) + 1,
         cb,
       ),
     );
