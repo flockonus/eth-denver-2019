@@ -1,20 +1,33 @@
- module.exports = {
-// Uncommenting the defaults below
-// provides for an easier quick-start with Ganache.
-// You can also follow this format for other networks;
-// see <http://truffleframework.com/docs/advanced/configuration>
-// for more details on how to specify configuration options!
+const HDWalletProvider = require('truffle-hdwallet-provider');
 
-   networks: {
-     development: {
-       host: "127.0.0.1",
-       port: 7545,
-       network_id: "*"
-     },
-     test: {
-       host: "127.0.0.1",
-       port: 7545,
-       network_id: "*"
-     }
-   }
- };
+// Private key (as exported from MetaMask)
+const PRIV = process.env.PRIV;
+
+// a provider, such as infura or alchemy (once they solved it)
+const WEB3_URL = process.env.WEB3_URL;
+
+// The creator, and initial CEO / COO
+const FROM_ADDRESS = process.env.FROM_ADDRESS;
+
+module.exports = {
+  networks: {
+    // https://www.rinkeby.io/
+    // https://blog.abuiles.com/blog/2017/07/09/deploying-truffle-contracts-to-rinkeby/
+    rinkeby: {
+      provider: () => new HDWalletProvider(PRIV, WEB3_URL),
+      network_id: 4,
+      from: FROM_ADDRESS,
+      gas: 5000000, // 5M gas limit used for deploy
+      gasPrice: 10000000000, // 10gwei
+    },
+  },
+  mocha: {
+    bail: false,
+  },
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 200,
+    },
+  },
+};

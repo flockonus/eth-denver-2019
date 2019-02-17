@@ -36,14 +36,20 @@ async function debugBoard(gameId, city) {
 }
 
 async function debugPlayers(gameId, city) {
-    let players = [];
-    let balances = [];
-    console.log(`Players and balances:`);
-    const playerinfo = await city.getPlayers(gameId);
-    for (let i = 0; i < playerinfo[0].length; ++i) {
-      console.log(`player ${playerinfo[0][i]}; balance ${playerinfo[1][i]}`);
-    }
+  console.log(`Players and balances:`);
+  const playerinfo = await city.getPlayers(gameId);
+  for (let i = 0; i < playerinfo[0].length; ++i) {
+    console.log(`player ${playerinfo[0][i]}; balance ${playerinfo[1][i]}`);
+  }
+}
 
+async function setupGame(city, accounts) {
+  let tx = await city.createGame(0, { value: 0, from: accounts[0] });
+  const id = tx.logs
+    .filter((e) => e.event === 'GameCreated')[0]
+    .args.gameId.toNumber();
+  await city.joinGame(id, { value: 0, from: accounts[1] });
+  return id;
 }
 
 contract('City', (accounts) => {
@@ -100,7 +106,26 @@ contract('City', (accounts) => {
     await debugBoard(1, city);
   });
 
-  it('calculate income', async function() {
+  it('resolve bids', async function() {
+    // setup a new game for this test
+    const gameId = await setupGame(city, accounts);
+    let tx;
+
+    // p1 bids on a terrain
+    let price = 10;
+    tx = await city.bid(gameId, 0, 0, ZONES.RESIDENTIAL, price);
+    // console.log(tx.logs);
+    tx = await city.bid(gameId, 0, 0, ZONES.RESIDENTIAL, price - 1);
+    // console.log(tx.logs);
+    tx = await city.bid(gameId, 0, 0, ZONES.RESIDENTIAL, price - 1);
+
+    tx = await city._resolveBids(gameId);
+    console.log(
+      tx.logs.map((ev) => ({ ev: ev.args[0], plotId: ev.args[1].toNumber() })),
+    );
+  });
+
+  it.skip('calculate income', async function() {
     let tx;
     tx = await city.calculateIncome(1);
     await debugPlayers(1, city);
