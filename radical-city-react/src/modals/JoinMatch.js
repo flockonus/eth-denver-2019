@@ -2,15 +2,13 @@ import Config from '../config';
 import React, {Component} from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
-import Dropdown from 'react-bootstrap/Dropdown';
-import {getWeb3} from '../utils/web3';
+import {getWeb3, getGameContractInstance} from '../utils/web3';
 
-class Bid extends Component {
+class JoinMatch extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      propertyType: '',
-      bid: '',
+      matchID: '',
     };
     this.sendTransaction = this.sendTransaction.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -18,6 +16,7 @@ class Bid extends Component {
 
   async componentDidMount() {
     this.web3 = await getWeb3();
+    this.contractInstance = getGameContractInstance();
   }
 
   handleInputChange(event) {
@@ -26,13 +25,11 @@ class Bid extends Component {
     });
   }
   sendTransaction() {
-    this.web3.eth.sendTransaction(
-      {
-        from: this.web3.eth.accounts[0],
-        to: Config.gameContractAddr,
-        value: this.state.bid * 1000000000000000000,
-      },
-      (err, tx) => {
+    this.contractInstance.myStateChangingMethod(
+      'someParam1',
+      23,
+      {value: this.state.bid * 1000000000000000000, gas: 2000},
+      function(err, result) {
         this.props.handleClose();
       },
     );
@@ -43,27 +40,17 @@ class Bid extends Component {
       <>
         <Modal show={showModal} onHide={handleClose}>
           <Modal.Header closeButton>
-            <Modal.Title>Your bid</Modal.Title>
+            <Modal.Title>Join Match</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <label> Bid (ETH) </label>
+            <label> Match ID </label>
             <input
-              name="bid"
+              name="matchID"
               type="number"
-              value={this.state.bid}
+              value={this.state.matchID}
               onChange={this.handleInputChange}
               className="form-control"
             />
-            <label> Type </label>
-            <select
-              name="propertyType"
-              value={this.state.type}
-              onChange={this.handleInputChange}
-              className="form-control">
-              <option value="residential">Residential</option>
-              <option value="industrial">Industrial</option>
-              <option value="commmerical">Commerical</option>
-            </select>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>
@@ -81,4 +68,4 @@ class Bid extends Component {
     );
   }
 }
-export default Bid;
+export default JoinMatch;

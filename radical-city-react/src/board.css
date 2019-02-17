@@ -18,19 +18,22 @@ ul {
   margin-bottom: 10px;
 }
 
+.grid-container {
+  margin: 100px;
+}
+
 .square {
-  background: #fff;
+  height: 68px;
+  width: 68px;
   border: 1px solid #999;
   float: left;
   font-size: 12px;
   font-weight: bold;
   line-height: 68px;
-  height: 68px;
-  margin-right: -1px;
-  margin-top: -1px;
+  /* margin-right: -1px; */
+  /* margin-top: -1px; */
   padding: 0;
   text-align: center;
-  width: 68px;
 }
 
 .square:focus {
@@ -48,4 +51,41 @@ ul {
 
 .game-info {
   margin-left: 20px;
+}
+
+
+.TileDetails {
+  position: absolute;
+  border: 1px dashed red;
+  border-radius: 5px;
+  width: 200px;
+  height: 120px;
+}
+
+.close-btn {
+  background: rgb(159, 159, 249);
+  border: 1px solid white;
+  border-radius: 50%;
+  text-align: center;
+  padding: 2px;
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  right: 0;
+}
+
+.zone-0 {
+  background-color: #FFF;
+}
+
+.zone-1 {
+  background-color: yellow;
+}
+
+.zone-2 {
+  background-color: gold;
+}
+
+.zone-3 {
+  background-color: grey;
 }

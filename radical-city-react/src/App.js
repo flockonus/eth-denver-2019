@@ -1,10 +1,8 @@
 import React, {Component} from 'react';
 import {getWeb3} from './utils/web3';
-import Ethereum from './Ethereum';
+// import Ethereum from './Ethereum';
 import Board from './Board';
-
-const web3 = getWeb3();
-const filter = web3.eth.filter('latest');
+import assistInstance from './utils/blocknative';
 
 class App extends Component {
   constructor(props) {
@@ -15,24 +13,27 @@ class App extends Component {
       blockNumber: 0,
       timer: 0,
     };
-    this.web3 = web3;
   }
 
   componentDidMount() {
-    if (this.web3 && this.web3.isConnected()) {
-      this.setState({isConnected: true});
+    if (typeof window !== 'undefined') {
+      assistInstance
+        .onboard()
+        .then(async success => {
+          this.web3 = await getWeb3();
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
     }
-    this.web3.version.getNetwork((err, netId) => {
-      this.setState({network: netId});
-    });
-    filter.watch((error, result) => {
-      web3.eth.getBlock(result, true, (error, block) => {
-        this.setState({blockNumber: block.number});
-      });
-    });
   }
   render() {
-    return <Board web3={this.state.web3} />;
+    return (
+      <div>
+        <h1> Radical Cities </h1>
+        <Board />
+      </div>
+    );
   }
 }
 export default App;
