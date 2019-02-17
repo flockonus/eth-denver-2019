@@ -25,16 +25,14 @@ class JoinMatch extends Component {
     });
   }
   sendTransaction() {
-    // this.web3.eth.sendTransaction(
-    // {
-    // from: this.web3.eth.accounts[0],
-    // to: Config.gameContractAddr,
-    // value: this.state.bid * 1000000000000000000,
-    // },
-    // (err, tx) => {
-    // this.props.handleClose();
-    // },
-    // );
+    this.contractInstance.myStateChangingMethod(
+      'someParam1',
+      23,
+      {value: this.state.bid * 1000000000000000000, gas: 2000},
+      function(err, result) {
+        this.props.handleClose();
+      },
+    );
   }
   render() {
     const {showModal, handleClose} = this.props;
