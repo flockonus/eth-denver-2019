@@ -24,10 +24,18 @@ class Game extends Component {
   async componentDidMount() {
     this.web3 = await getWeb3();
     this.contractInstance = getGameContractInstance();
-    const plotSet = this.contractInstance.plotSet("latest");
-    plotSet.watch((err, result) => {
-      const { round, owner, x, y, zone } = result.returnValues;
-      const grid = this.state.grid;
+    const events = this.contractInstance.allEvents("latest");
+    events.watch((err, event) => {
+      console.log("new event received: ", event.name);
+      if (event.name === "PlotSet") {
+        const { round, owner, x, y, zone } = event.returnValues;
+        const grid = Object.assign({}, this.state.grid);
+        grid[`${x}-${y}`] = {
+          owner,
+          zone
+        };
+        this.setState({ grid, round });
+      }
     });
   }
   handleOpen() {
