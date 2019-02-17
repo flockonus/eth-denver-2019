@@ -6,6 +6,8 @@ contract City {
         uint8 boardSize;
         // up to how many players the game MUST have
         uint8 partySize;
+        // keep track of rounds, starting from 0
+        uint8 round;
         // limit of time for all players to join a session
         uint64 joinLimitAt;
         // exact time the session stated, 0 means it didn't
@@ -18,6 +20,8 @@ contract City {
         mapping(uint => Plot) plots;
         // once players join they get a balance initialized to their wallet
         mapping(address => int) balances;
+        // collect bids plotId -> top bid
+        mapping(uint => Plot) bids;
     }
 
     // all plots start owned by 0x0, and they are Residence, of value 1
@@ -35,6 +39,9 @@ contract City {
     event Join(uint indexed gameId, address player);
     event GameStart(uint256 indexed gameId);
     event PlotSet(uint indexed gameId, uint round, address owner, uint8 x, uint8 y, uint8 zone);
+
+    // DEBUG ONLY -- RM FROM PROD
+    event DebugU(string label, uint val);
     
     mapping(uint => Game) public games;
     uint public gameCount;
@@ -54,11 +61,12 @@ contract City {
     function createGame(uint _buyIn) public payable {
         require(_buyIn < 100 ether, "buy in too high");
         require(msg.value == _buyIn, "send balance");
-        uint8 _boardSize = 4;
+        uint8 _boardSize = 5;
         Game memory game = Game({
             // TODO fix those arbitrary values
             boardSize: _boardSize,
             partySize: 2,
+            round: 0,
             // arbitrary limit
             joinLimitAt: uint64(now + 1 hours),
             startedAt: 0,
@@ -67,13 +75,13 @@ contract City {
         });
         gameCount++;
         games[gameCount] = game;
+        emit GameCreated(gameCount, game.boardSize, game.partySize, game.joinLimitAt, game.buyIn);
+
         games[gameCount].players.push(msg.sender);
         // 1k initial balance!
         games[gameCount].balances[msg.sender] = INIT_POINTS;
-        emit Join(gameCount, msg.sender);
-        
         // _initBoard(boardId);
-        emit GameCreated(gameCount, game.boardSize, game.partySize, game.joinLimitAt, game.buyIn);
+        emit Join(gameCount, msg.sender);
     }
 
     function joinGame(uint gameId) public payable {
@@ -123,25 +131,89 @@ contract City {
         return (plot.owner, plot.zone, plot.value);
     }
 
+    /// @notice any player can put a bid for that round, only the top one per square will stay
+    function bid(uint gameId, uint8 x, uint8 y, uint8 zone, uint32 price) external {
+        Game storage game = games[gameId];
+        require(game.boardSize > 1, "game doesnt exist");
+        require(game.startedAt > 0, "game didnt start");
+        require(price < INIT_POINTS * 10, "price over limit");
+        require(game.balances[msg.sender] > price, "balance cant go negative");
+
+        uint plotId = (y * game.boardSize) + x;
+
+        Plot storage currentBid = game.bids[plotId];
+
+        // we should allow bids that may be less than the current plot price
+        //   because the owner may be lowering the price of the plot at that time
+
+        // incoming bid is higher than an existing bid (if any)
+        if (price > currentBid.value) {
+            // silently discard possible existing bid
+            game.bids[plotId] = Plot({
+                owner: msg.sender,
+                zone: zone,
+                value: price
+            });
+            emit DebugU("bid got it", plotId);
+        } else {
+            // TODO maybe revert the loser bid?
+            emit DebugU("bid felt flat", plotId);
+        }
+
+        // maybe we should check user balance here BUT that would require a full round simulation, so nevermind.
+    }
+
+    /// @dev run through all the bids for current round, and update the grid
+    function _resolveBids(uint gameId) public {
+        Game storage game = games[gameId];
+        require(game.boardSize > 1, "game doesnt exist");
+        require(game.startedAt > 0, "game didnt start");
+
+        for (uint x = 0; x < game.boardSize; x++) {
+            for (uint y = 0; y < game.boardSize; y++) {
+                uint plotId = (y * game.boardSize) + x;
+                emit DebugU("resolve _bid", plotId);
+
+                Plot storage _bid = game.bids[plotId];
+                
+                if (_bid.value > 0) {
+                    emit DebugU("  bid:", _bid.value);
+                    Plot storage plot = game.plots[plotId];
+                    if (_bid.value > plot.value) {
+                        emit DebugU("  bid won!", _bid.value);
+                        game.plots[plotId] = Plot({
+                            owner: _bid.owner,
+                            zone: _bid.zone,
+                            value: _bid.value
+                        });
+                    } else {
+                        emit DebugU("  bid lost", _bid.value);
+                    }
+                    delete game.bids[plotId];
+                }
+            }
+        }
+    }
+
     function calculateIncome(uint gameId) public {
         Game storage game = games[gameId];
-        for (uint8 col = 0; col < game.boardSize; ++col) {
-            for (uint8 row = 0; row < game.boardSize; ++row) {
+        for (uint8 row = 0; row < game.boardSize; ++row) {
+            for (uint8 col = 0; col < game.boardSize; ++col) {
                 address player;
                 uint8 zone;
                 uint32 value;
-                (player, zone, value) = getPlot(gameId, row, col);
+                (player, zone, value) = getPlot(gameId, col, row);
                 uint score = 0;
                 for (uint8 neighborIndex = 0; neighborIndex < NEIGHBORDELTAS.length; ++neighborIndex) {
                     int8 deltaX = NEIGHBORDELTAS[neighborIndex][0];
                     int8 deltaY = NEIGHBORDELTAS[neighborIndex][1];
-                    if ((deltaX >= 0 || row > 0) && (deltaX <= 0 || row < game.boardSize) &&
-                       (deltaY >= 0 || col > 0) && (deltaY <= 0 || col < game.boardSize)) {
+                    if ((deltaX >= 0 || col > 0) && (deltaX <= 0 || col < game.boardSize - 1) &&
+                       (deltaY >= 0 || row > 0) && (deltaY <= 0 || row < game.boardSize - 1)) {
                         // This is a valid neighbor so get it...
                         address neighborPlayer;
                         uint8 neighborZone;
                         uint32 neighborValue;
-                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(row) + deltaX), uint8(int8(col) + deltaY));
+                        (neighborPlayer, neighborZone, neighborValue) = getPlot(gameId, uint8(int8(col) + deltaX), uint8(int8(row) + deltaY));
 
                         // ... and apply neighborhood counting rules
                         if (zone == RESIDENTIAL && neighborZone == COMMERCIAL) {
